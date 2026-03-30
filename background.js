@@ -1,6 +1,5 @@
 import { getPresetRange } from "./lib/date-range.mjs";
 import { parseWorkHours } from "./lib/report-parser.mjs";
-import { runStatistics } from "./lib/report-service.mjs";
 
 const DEFAULT_ORIGIN = "http://10.19.3.38";
 const SUPPORTED_HOST = "10.19.3.38";
@@ -21,34 +20,25 @@ async function handleRunStatistics(message) {
   const { preset, startDate, endDate } = resolveDateRange(message);
   const origin = resolveOrigin(message.activeTabUrl);
   const canUseContentScript = isSupportedHost(message.activeTabUrl);
-  let result;
 
-  try {
-    if (!message.activeTabId || !canUseContentScript) {
-      throw new Error("当前标签页不在目标系统域名下。");
-    }
-
-    const html = await runPageSearchAndGetHtml({
-      tabId: message.activeTabId,
-      origin,
-      startDate,
-      endDate
-    });
-
-    result = {
-      ...parseWorkHours(html),
-      startDate,
-      endDate,
-      endpoint: new URL("/daily_report/my_report.jsp", origin).toString(),
-      fetchedAt: new Date().toISOString()
-    };
-  } catch (pageError) {
-    result = await runStatistics({
-      origin,
-      startDate,
-      endDate
-    });
+  if (!message.activeTabId || !canUseContentScript) {
+    throw new Error("请先打开考勤系统主页面后再执行统计。");
   }
+
+  const html = await runPageSearchAndGetHtml({
+    tabId: message.activeTabId,
+    origin,
+    startDate,
+    endDate
+  });
+
+  const result = {
+    ...parseWorkHours(html),
+    startDate,
+    endDate,
+    endpoint: new URL("/daily_report/my_report.jsp", origin).toString(),
+    fetchedAt: new Date().toISOString()
+  };
 
   const payload = {
     ...result,

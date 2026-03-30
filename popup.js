@@ -21,7 +21,7 @@ async function init() {
 
 async function runPreset(preset) {
   setLoading(true);
-  setStatus("正在请求 my_report.jsp 并统计全部工时…", "loading");
+  setStatus("正在刷新页面内日报列表并统计全部工时…", "loading");
 
   try {
     const activeTab = await getActiveTab();

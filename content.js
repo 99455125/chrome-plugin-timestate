@@ -23,7 +23,7 @@ async function runStatisticsInPage({ startDate, endDate }) {
   const reportContext = findReportContext();
 
   if (!reportContext) {
-    throw new Error("未找到 my_report.jsp 页面或主页面内的日报 iframe。");
+    throw new Error("未找到主页面中的日报 iframe，请先进入包含“我的日报”的系统主页。");
   }
 
   const { reportWindow, reportDocument, iframeElement } = reportContext;
@@ -38,34 +38,22 @@ async function runStatisticsInPage({ startDate, endDate }) {
   setInputValue(startInput, startDate);
   setInputValue(endInput, endDate);
 
-  if (iframeElement) {
-    const loadedDocument = await submitSearchInIframe({
-      iframeElement,
-      reportWindow,
-      searchButton
-    });
-
-    return loadedDocument.documentElement.outerHTML;
+  if (!iframeElement) {
+    throw new Error("当前页面不是带 iframe 的系统主页，请回到主页面后再执行统计。");
   }
 
-  const html = await postReportWithinPage({
-    reportWindow,
+  const loadedDocument = await submitSearchInIframe({
+    iframeElement,
     startDate,
-    endDate
+    endDate,
+    reportWindow,
+    searchButton
   });
 
-  return html;
+  return loadedDocument.documentElement.outerHTML;
 }
 
 function findReportContext() {
-  if (isReportDocument(document)) {
-    return {
-      reportWindow: window,
-      reportDocument: document,
-      iframeElement: null
-    };
-  }
-
   const iframeElement = document.querySelector("#mainframe, iframe[name='iframe'], iframe[src*='/daily_report/my_report.jsp']");
 
   if (!iframeElement) {
@@ -164,29 +152,4 @@ function triggerSearch(reportWindow, searchButton) {
   }
 
   form.submit();
-}
-
-async function postReportWithinPage({ reportWindow, startDate, endDate }) {
-  const url = new URL("/daily_report/my_report.jsp", reportWindow.location.origin).toString();
-  const body = new URLSearchParams({
-    start_time: startDate,
-    end_time: endDate,
-    search: "搜索"
-  });
-
-  const response = await reportWindow.fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
-    },
-    credentials: "include",
-    cache: "no-store",
-    body: body.toString()
-  });
-
-  if (!response.ok) {
-    throw new Error(`页面内请求失败: HTTP ${response.status}`);
-  }
-
-  return response.text();
 }
