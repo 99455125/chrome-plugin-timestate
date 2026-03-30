@@ -15,8 +15,8 @@
       return true;
     }
 
-    if (message?.type === "TOGGLE_FLOATING_PANEL") {
-      toggleFloatingPanel()
+    if (message?.type === "SHOW_FLOATING_PANEL") {
+      showFloatingPanelFromMessage()
         .then((visible) => sendResponse({ ok: true, visible }))
         .catch((error) => sendResponse({ ok: false, error: error.message }));
 
@@ -29,7 +29,10 @@
 
 const FLOAT_PANEL_ID = "__workHoursStatsFloatingPanel";
 const FLOAT_PANEL_STYLE_ID = "__workHoursStatsFloatingPanelStyle";
+const FLOAT_PANEL_STORAGE_KEY = "floatingPanelState";
 let floatingPanelState = null;
+
+restoreFloatingPanelOnLoad();
 
 async function runStatisticsInPage({ startDate, endDate }) {
   let reportContext = findReportContext();
@@ -332,17 +335,18 @@ function isLoginDocument(doc) {
   );
 }
 
-async function toggleFloatingPanel() {
-  if (floatingPanelState?.root && !floatingPanelState.root.hidden) {
-    hideFloatingPanel();
-    return false;
-  }
-
+async function showFloatingPanelFromMessage() {
   const reportContext = await ensureReportContextForPanel();
   const panel = ensureFloatingPanel();
 
   syncPanelDateInputs(panel, reportContext);
   showFloatingPanel(panel, reportContext);
+  await persistFloatingPanelState({
+    visible: true,
+    startDate: panel.startInput.value,
+    endDate: panel.endInput.value,
+    collapsed: panel.collapsed
+  });
   return true;
 }
 
@@ -667,8 +671,10 @@ function bindFloatingPanelEvents(panel) {
   panel.fillLastButton.addEventListener("click", () => applyFloatingPreset("lastMonth"));
   panel.fillCurrentButton.addEventListener("click", () => applyFloatingPreset("currentMonth"));
   panel.runButton.addEventListener("click", () => runFloatingPanelStatistics());
-  panel.closeButton.addEventListener("click", hideFloatingPanel);
+  panel.closeButton.addEventListener("click", () => hideFloatingPanel({ manual: true }));
   panel.collapseButton.addEventListener("click", () => toggleFloatingCollapse(panel));
+  panel.startInput.addEventListener("change", () => persistCurrentFloatingPanelState());
+  panel.endInput.addEventListener("change", () => persistCurrentFloatingPanelState());
   enableFloatingPanelDragging(panel);
   window.addEventListener("resize", () => keepFloatingPanelInViewport(panel));
 }
@@ -684,6 +690,8 @@ function toggleFloatingCollapse(panel) {
       positionFloatingPanel(panel, reportContext);
     }
   }
+
+  persistCurrentFloatingPanelState();
 }
 
 function enableFloatingPanelDragging(panel) {
@@ -709,6 +717,7 @@ function enableFloatingPanelDragging(panel) {
     panel.root.classList.remove("is-dragging");
     document.removeEventListener("mousemove", handleMouseMove);
     document.removeEventListener("mouseup", handleMouseUp);
+    persistCurrentFloatingPanelState();
   };
 
   panel.header.addEventListener("mousedown", (event) => {
@@ -742,12 +751,16 @@ function showFloatingPanel(panel, reportContext) {
   panel.root.style.visibility = "";
 }
 
-function hideFloatingPanel() {
+function hideFloatingPanel({ manual = false } = {}) {
   if (!floatingPanelState?.root) {
     return;
   }
 
   floatingPanelState.root.hidden = true;
+
+  if (manual) {
+    chrome.storage.local.remove(FLOAT_PANEL_STORAGE_KEY);
+  }
 }
 
 function syncPanelDateInputs(panel, reportContext) {
@@ -811,6 +824,7 @@ function applyFloatingPreset(type) {
   panel.startInput.value = range.startDate;
   panel.endInput.value = range.endDate;
   setFloatingPanelStatus("已填入时间范围。");
+  persistCurrentFloatingPanelState();
 }
 
 async function runFloatingPanelStatistics() {
@@ -852,6 +866,8 @@ async function runFloatingPanelStatistics() {
         positionFloatingPanel(panel, reportContext);
       }
     }
+
+    persistCurrentFloatingPanelState();
   } catch (error) {
     setFloatingPanelStatus(error.message || "统计失败。", "error");
   } finally {
@@ -951,4 +967,66 @@ function escapeHtml(value) {
 
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
+}
+
+async function restoreFloatingPanelOnLoad() {
+  try {
+    const { [FLOAT_PANEL_STORAGE_KEY]: storedState } = await chrome.storage.local.get(FLOAT_PANEL_STORAGE_KEY);
+
+    if (!storedState?.visible) {
+      return;
+    }
+
+    const reportContext = await ensureReportContextForPanel();
+    const panel = ensureFloatingPanel();
+
+    if (storedState.startDate) {
+      panel.startInput.value = storedState.startDate;
+    }
+
+    if (storedState.endDate) {
+      panel.endInput.value = storedState.endDate;
+    }
+
+    panel.collapsed = Boolean(storedState.collapsed);
+    panel.root.classList.toggle("is-collapsed", panel.collapsed);
+    panel.collapseButton.textContent = panel.collapsed ? "展开" : "收起";
+
+    if (storedState.position && Number.isFinite(storedState.position.left) && Number.isFinite(storedState.position.top)) {
+      panel.userMoved = true;
+      panel.root.style.left = `${storedState.position.left}px`;
+      panel.root.style.top = `${storedState.position.top}px`;
+    }
+
+    syncPanelDateInputs(panel, reportContext);
+    showFloatingPanel(panel, reportContext);
+    keepFloatingPanelInViewport(panel);
+  } catch (_error) {
+  }
+}
+
+function persistCurrentFloatingPanelState() {
+  if (!floatingPanelState?.root || floatingPanelState.root.hidden) {
+    return;
+  }
+
+  persistFloatingPanelState({
+    visible: true,
+    startDate: floatingPanelState.startInput.value,
+    endDate: floatingPanelState.endInput.value,
+    collapsed: floatingPanelState.collapsed,
+    position: {
+      left: parseFloat(floatingPanelState.root.style.left) || floatingPanelState.root.getBoundingClientRect().left,
+      top: parseFloat(floatingPanelState.root.style.top) || floatingPanelState.root.getBoundingClientRect().top
+    }
+  });
+}
+
+async function persistFloatingPanelState(state) {
+  try {
+    await chrome.storage.local.set({
+      [FLOAT_PANEL_STORAGE_KEY]: state
+    });
+  } catch (_error) {
+  }
 }

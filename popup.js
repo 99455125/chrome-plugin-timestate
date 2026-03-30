@@ -12,7 +12,7 @@ init();
 async function init() {
   lastMonthButton.addEventListener("click", () => runPreset("lastMonth"));
   currentMonthButton.addEventListener("click", () => runPreset("currentMonth"));
-  openPanelButton.addEventListener("click", toggleFloatingPanel);
+  openPanelButton.addEventListener("click", openFloatingPanel);
 
   const { lastStatistics } = await chrome.storage.local.get("lastStatistics");
   if (lastStatistics) {
@@ -47,9 +47,9 @@ async function runPreset(preset) {
   }
 }
 
-async function toggleFloatingPanel() {
+async function openFloatingPanel() {
   setLoading(true);
-  setStatus("正在切换页面悬浮窗…", "loading");
+  setStatus("正在打开网页悬浮窗…", "loading");
 
   try {
     const activeTab = await getActiveTab();
@@ -64,16 +64,16 @@ async function toggleFloatingPanel() {
     });
 
     const response = await sendTabMessageWithTimeout(activeTab.id, {
-      type: "TOGGLE_FLOATING_PANEL"
+      type: "SHOW_FLOATING_PANEL"
     });
 
     if (!response?.ok) {
-      throw new Error(response?.error || "切换悬浮窗失败。");
+      throw new Error(response?.error || "打开悬浮窗失败。");
     }
 
-    setStatus(response.visible ? "悬浮窗已打开。" : "悬浮窗已隐藏。");
+    setStatus("悬浮窗已显示。");
   } catch (error) {
-    setStatus(error.message || "切换悬浮窗失败。", "error");
+    setStatus(error.message || "打开悬浮窗失败。", "error");
   } finally {
     setLoading(false);
   }
