@@ -63,7 +63,6 @@ function renderResult(result) {
     renderRow("时间范围", `${result.startDate} 至 ${result.endDate}`),
     renderRow("总工时", formatHours(result.totalHours)),
     renderRow("记录条数", `${result.rowCount} 条`),
-    renderRow("请求地址", result.endpoint),
     renderRow("统计时间", formatDateTime(result.fetchedAt))
   ].join("");
 }

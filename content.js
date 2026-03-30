@@ -50,7 +50,11 @@ async function runStatisticsInPage({ startDate, endDate }) {
     searchButton
   });
 
-  return loadedDocument.documentElement.outerHTML;
+  return fetchFullReportHtml({
+    reportWindow: loadedDocument.defaultView || iframeElement.contentWindow,
+    startDate,
+    endDate
+  });
 }
 
 function findReportContext() {
@@ -152,4 +156,34 @@ function triggerSearch(reportWindow, searchButton) {
   }
 
   form.submit();
+}
+
+async function fetchFullReportHtml({ reportWindow, startDate, endDate }) {
+  if (!reportWindow) {
+    throw new Error("日报 iframe 刷新后无法获取页面上下文。");
+  }
+
+  const currentUrl = new URL(reportWindow.location.href);
+  const requestUrl = new URL(currentUrl.pathname, currentUrl.origin).toString();
+  const requestBody = new URLSearchParams({
+    start_time: startDate,
+    end_time: endDate,
+    search: "搜索"
+  });
+
+  const response = await reportWindow.fetch(requestUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+    },
+    credentials: "include",
+    cache: "no-store",
+    body: requestBody.toString()
+  });
+
+  if (!response.ok) {
+    throw new Error(`刷新后获取完整日报失败: HTTP ${response.status}`);
+  }
+
+  return response.text();
 }
