@@ -345,7 +345,9 @@ async function showFloatingPanelFromMessage() {
     visible: true,
     startDate: panel.startInput.value,
     endDate: panel.endInput.value,
-    collapsed: panel.collapsed
+    collapsed: panel.collapsed,
+    calendarExpanded: panel.calendarExpanded,
+    lastResult: panel.lastResult
   });
   return true;
 }
@@ -420,6 +422,10 @@ function ensureFloatingPanel() {
         <div class="whs-panel__row"><dt>出勤天数</dt><dd>--</dd></div>
         <div class="whs-panel__row"><dt>记录条数</dt><dd>--</dd></div>
       </dl>
+      <div class="whs-panel__calendarbar">
+        <button class="whs-panel__calendar-toggle" data-action="calendar" type="button">工时日历</button>
+      </div>
+      <div class="whs-panel__calendar" data-role="calendar" hidden></div>
     </div>
   `;
 
@@ -431,17 +437,22 @@ function ensureFloatingPanel() {
     body: root.querySelector(".whs-panel__body"),
     status: root.querySelector("[data-role='status']"),
     result: root.querySelector("[data-role='result']"),
+    calendar: root.querySelector("[data-role='calendar']"),
     startInput: root.querySelector("[data-role='start']"),
     endInput: root.querySelector("[data-role='end']"),
     collapseButton: root.querySelector("[data-action='collapse']"),
     closeButton: root.querySelector("[data-action='close']"),
+    calendarButton: root.querySelector("[data-action='calendar']"),
     fillLastButton: root.querySelector("[data-action='fill-last']"),
     fillCurrentButton: root.querySelector("[data-action='fill-current']"),
     runButton: root.querySelector("[data-action='run']"),
     collapsed: false,
-    userMoved: false
+    userMoved: false,
+    calendarExpanded: false,
+    lastResult: null
   };
 
+  setFloatingCalendarExpanded(floatingPanelState, false);
   bindFloatingPanelEvents(floatingPanelState);
   return floatingPanelState;
 }
@@ -662,6 +673,118 @@ function ensureFloatingPanelStyles() {
     #${FLOAT_PANEL_ID} .whs-panel__result--empty dd {
       color: #91a0b4;
     }
+
+    #${FLOAT_PANEL_ID} .whs-panel__calendarbar {
+      margin-top: 12px;
+    }
+
+    #${FLOAT_PANEL_ID} .whs-panel__calendar-toggle {
+      width: 100%;
+      height: 36px;
+      border-radius: 11px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #265f47;
+      background: linear-gradient(135deg, #ebfaf2 0%, #daf5e8 100%);
+      box-shadow: inset 0 0 0 1px rgba(144, 212, 177, 0.62);
+    }
+
+    #${FLOAT_PANEL_ID} .whs-panel__calendar {
+      display: grid;
+      gap: 12px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px dashed rgba(120, 145, 176, 0.35);
+    }
+
+    #${FLOAT_PANEL_ID} .whs-panel__calendar[hidden] {
+      display: none !important;
+    }
+
+    #${FLOAT_PANEL_ID} .whs-panel__calendar-month {
+      padding: 10px;
+      border: 1px solid rgba(170, 189, 216, 0.35);
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgba(248, 251, 255, 0.98) 0%, rgba(241, 247, 255, 0.98) 100%);
+    }
+
+    #${FLOAT_PANEL_ID} .whs-panel__calendar-title {
+      margin: 0 0 8px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #29496f;
+    }
+
+    #${FLOAT_PANEL_ID} .whs-panel__calendar-weekdays,
+    #${FLOAT_PANEL_ID} .whs-panel__calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+    }
+
+    #${FLOAT_PANEL_ID} .whs-panel__calendar-weekdays {
+      margin-bottom: 6px;
+    }
+
+    #${FLOAT_PANEL_ID} .whs-panel__calendar-weekday {
+      text-align: center;
+      font-size: 10px;
+      font-weight: 700;
+      color: #7a8ca8;
+    }
+
+    #${FLOAT_PANEL_ID} .whs-panel__calendar-day {
+      min-height: 52px;
+      padding: 6px 4px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.85);
+      box-shadow: inset 0 0 0 1px rgba(215, 225, 239, 0.85);
+    }
+
+    #${FLOAT_PANEL_ID} .whs-panel__calendar-day--empty {
+      background: transparent;
+      box-shadow: none;
+    }
+
+    #${FLOAT_PANEL_ID} .whs-panel__calendar-day--weekend:not(.whs-panel__calendar-day--empty) {
+      background: rgba(247, 250, 255, 0.92);
+    }
+
+    #${FLOAT_PANEL_ID} .whs-panel__calendar-date {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      color: #415976;
+    }
+
+    #${FLOAT_PANEL_ID} .whs-panel__calendar-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 26px;
+      margin-top: 6px;
+      padding: 2px 7px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    #${FLOAT_PANEL_ID} .whs-panel__calendar-badge--good {
+      background: linear-gradient(135deg, #2aa86f 0%, #42c487 100%);
+      box-shadow: 0 8px 14px rgba(42, 168, 111, 0.22);
+    }
+
+    #${FLOAT_PANEL_ID} .whs-panel__calendar-badge--bad {
+      background: linear-gradient(135deg, #dc5a5a 0%, #ef7676 100%);
+      box-shadow: 0 8px 14px rgba(220, 90, 90, 0.2);
+    }
+
+    #${FLOAT_PANEL_ID} .whs-panel__calendar-empty {
+      font-size: 12px;
+      color: #7a8ca8;
+      line-height: 1.6;
+    }
   `;
 
   document.head.append(style);
@@ -673,6 +796,7 @@ function bindFloatingPanelEvents(panel) {
   panel.runButton.addEventListener("click", () => runFloatingPanelStatistics());
   panel.closeButton.addEventListener("click", () => hideFloatingPanel({ manual: true }));
   panel.collapseButton.addEventListener("click", () => toggleFloatingCollapse(panel));
+  panel.calendarButton.addEventListener("click", () => toggleFloatingCalendar(panel));
   panel.startInput.addEventListener("change", () => persistCurrentFloatingPanelState());
   panel.endInput.addEventListener("change", () => persistCurrentFloatingPanelState());
   enableFloatingPanelDragging(panel);
@@ -757,6 +881,7 @@ function hideFloatingPanel({ manual = false } = {}) {
   }
 
   floatingPanelState.root.hidden = true;
+  setFloatingCalendarExpanded(floatingPanelState, false);
 
   if (manual) {
     chrome.storage.local.remove(FLOAT_PANEL_STORAGE_KEY);
@@ -842,6 +967,11 @@ async function runFloatingPanelStatistics() {
     return;
   }
 
+  if (panel.calendarExpanded) {
+    setFloatingCalendarExpanded(panel, false);
+    persistCurrentFloatingPanelState();
+  }
+
   setFloatingPanelLoading(true);
   setFloatingPanelStatus("正在刷新页面并统计全部工时…", "loading");
 
@@ -877,6 +1007,7 @@ async function runFloatingPanelStatistics() {
 
 function renderFloatingPanelResult(result) {
   const panel = ensureFloatingPanel();
+  panel.lastResult = result;
   const rows = [
     renderFloatingPanelRow("时间范围", `${result.startDate} 至 ${result.endDate}`),
     renderFloatingPanelRow("总工时", formatHours(result.totalHours)),
@@ -891,6 +1022,10 @@ function renderFloatingPanelResult(result) {
 
   panel.result.classList.remove("whs-panel__result--empty");
   panel.result.innerHTML = rows.join("");
+
+  if (panel.calendarExpanded) {
+    renderFloatingCalendar(panel, result);
+  }
 }
 
 function renderFloatingPanelRow(label, value) {
@@ -913,6 +1048,112 @@ function setFloatingPanelLoading(loading) {
   panel.fillCurrentButton.disabled = loading;
   panel.runButton.disabled = loading;
   panel.collapseButton.disabled = loading;
+  panel.calendarButton.disabled = loading;
+}
+
+function toggleFloatingCalendar(panel) {
+  setFloatingCalendarExpanded(panel, !panel.calendarExpanded);
+
+  if (panel.calendarExpanded) {
+    renderFloatingCalendar(panel, panel.lastResult);
+  }
+
+  persistCurrentFloatingPanelState();
+}
+
+function setFloatingCalendarExpanded(panel, expanded) {
+  panel.calendarExpanded = Boolean(expanded);
+  panel.calendar.hidden = !panel.calendarExpanded;
+  panel.calendar.style.display = panel.calendarExpanded ? "grid" : "none";
+  panel.calendarButton.textContent = panel.calendarExpanded ? "收起日历" : "工时日历";
+}
+
+function renderFloatingCalendar(panel, result) {
+  if (!result?.startDate || !result?.endDate) {
+    panel.calendar.innerHTML = `<div class="whs-panel__calendar-empty">请先执行统计，再查看工时日历。</div>`;
+    return;
+  }
+
+  const months = buildCalendarMonths(result.startDate, result.endDate);
+  const dailyHoursMap = result.dailyHoursMap || {};
+
+  panel.calendar.innerHTML = months.map((month) => renderCalendarMonth(month, dailyHoursMap)).join("");
+}
+
+function buildCalendarMonths(startDate, endDate) {
+  const start = new Date(`${startDate}T00:00:00`);
+  const end = new Date(`${endDate}T00:00:00`);
+  const months = [];
+  let cursor = new Date(start.getFullYear(), start.getMonth(), 1);
+
+  while (cursor <= end) {
+    months.push({
+      year: cursor.getFullYear(),
+      month: cursor.getMonth()
+    });
+    cursor = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1);
+  }
+
+  return months;
+}
+
+function renderCalendarMonth(monthInfo, dailyHoursMap) {
+  const firstDay = new Date(monthInfo.year, monthInfo.month, 1);
+  const lastDay = new Date(monthInfo.year, monthInfo.month + 1, 0);
+  const leadingEmptyCount = firstDay.getDay();
+  const cells = [];
+
+  for (let index = 0; index < leadingEmptyCount; index += 1) {
+    cells.push(`<div class="whs-panel__calendar-day whs-panel__calendar-day--empty"></div>`);
+  }
+
+  for (let day = 1; day <= lastDay.getDate(); day += 1) {
+    const date = new Date(monthInfo.year, monthInfo.month, day);
+    const dateKey = formatDate(date);
+    const weekend = date.getDay() === 0 || date.getDay() === 6;
+    const hasHours = Object.prototype.hasOwnProperty.call(dailyHoursMap, dateKey);
+    const hoursValue = hasHours ? dailyHoursMap[dateKey] : (!weekend ? 0 : undefined);
+    const badgeHtml = renderCalendarBadge(hoursValue, weekend);
+    const weekendClass = weekend ? " whs-panel__calendar-day--weekend" : "";
+
+    cells.push(`
+      <div class="whs-panel__calendar-day${weekendClass}">
+        <span class="whs-panel__calendar-date">${day}</span>
+        ${badgeHtml}
+      </div>
+    `);
+  }
+
+  return `
+    <section class="whs-panel__calendar-month">
+      <h4 class="whs-panel__calendar-title">${monthInfo.year}年${monthInfo.month + 1}月</h4>
+      <div class="whs-panel__calendar-weekdays">
+        <span class="whs-panel__calendar-weekday">日</span>
+        <span class="whs-panel__calendar-weekday">一</span>
+        <span class="whs-panel__calendar-weekday">二</span>
+        <span class="whs-panel__calendar-weekday">三</span>
+        <span class="whs-panel__calendar-weekday">四</span>
+        <span class="whs-panel__calendar-weekday">五</span>
+        <span class="whs-panel__calendar-weekday">六</span>
+      </div>
+      <div class="whs-panel__calendar-grid">${cells.join("")}</div>
+    </section>
+  `;
+}
+
+function renderCalendarBadge(hoursValue, isWeekend) {
+  const hours = Number(hoursValue);
+
+  if (!Number.isFinite(hours)) {
+    return "";
+  }
+
+  if (isWeekend && hours === 0) {
+    return "";
+  }
+
+  const badgeClass = !isWeekend && hours === 8 ? "good" : "bad";
+  return `<span class="whs-panel__calendar-badge whs-panel__calendar-badge--${badgeClass}">${formatHours(hours)}</span>`;
 }
 
 function getPresetRange(type) {
@@ -991,6 +1232,8 @@ async function restoreFloatingPanelOnLoad() {
     panel.collapsed = Boolean(storedState.collapsed);
     panel.root.classList.toggle("is-collapsed", panel.collapsed);
     panel.collapseButton.textContent = panel.collapsed ? "展开" : "收起";
+    setFloatingCalendarExpanded(panel, Boolean(storedState.calendarExpanded));
+    panel.lastResult = storedState.lastResult || null;
 
     if (storedState.position && Number.isFinite(storedState.position.left) && Number.isFinite(storedState.position.top)) {
       panel.userMoved = true;
@@ -1001,6 +1244,12 @@ async function restoreFloatingPanelOnLoad() {
     syncPanelDateInputs(panel, reportContext);
     showFloatingPanel(panel, reportContext);
     keepFloatingPanelInViewport(panel);
+
+    if (panel.lastResult) {
+      renderFloatingPanelResult(panel.lastResult);
+    } else if (panel.calendarExpanded) {
+      renderFloatingCalendar(panel, null);
+    }
   } catch (_error) {
   }
 }
@@ -1015,6 +1264,8 @@ function persistCurrentFloatingPanelState() {
     startDate: floatingPanelState.startInput.value,
     endDate: floatingPanelState.endInput.value,
     collapsed: floatingPanelState.collapsed,
+    calendarExpanded: floatingPanelState.calendarExpanded,
+    lastResult: floatingPanelState.lastResult,
     position: {
       left: parseFloat(floatingPanelState.root.style.left) || floatingPanelState.root.getBoundingClientRect().left,
       top: parseFloat(floatingPanelState.root.style.top) || floatingPanelState.root.getBoundingClientRect().top
