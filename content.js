@@ -20,7 +20,7 @@
 })();
 
 async function runStatisticsInPage({ startDate, endDate }) {
-  const reportContext = findReportContext();
+  let reportContext = findReportContext();
 
   if (!reportContext) {
     throw new Error("未找到主页面中的日报 iframe，请先进入包含“我的日报”的系统主页。");
@@ -31,7 +31,15 @@ async function runStatisticsInPage({ startDate, endDate }) {
   }
 
   if (reportContext.state !== "report") {
-    throw new Error("未找到日报页面，请先在系统主页中打开“我的日报”后再执行统计。");
+    reportContext = await navigateToMyReport(reportContext);
+  }
+
+  if (reportContext.state === "login") {
+    throw new Error("当前会话可能已失效，请先登录考勤系统后重试。");
+  }
+
+  if (reportContext.state !== "report") {
+    throw new Error("自动打开“我的日报”失败，请确认当前页面为系统主页。");
   }
 
   const { reportWindow, reportDocument, iframeElement } = reportContext;
@@ -137,6 +145,20 @@ async function submitSearchInIframe({ iframeElement, reportWindow, searchButton 
   return loadedDocument;
 }
 
+async function navigateToMyReport(reportContext) {
+  const { iframeElement } = reportContext;
+  const loadPromise = waitForIframeLoad(iframeElement, 15000);
+  const clicked = clickMyReportLink();
+
+  if (!clicked) {
+    const loadedDocument = await forceNavigateIframeToMyReport(iframeElement, loadPromise);
+    return buildContextFromLoadedDocument(iframeElement, loadedDocument);
+  }
+
+  const loadedDocument = await loadPromise;
+  return buildContextFromLoadedDocument(iframeElement, loadedDocument);
+}
+
 function waitForIframeLoad(iframeElement, timeoutMs) {
   return new Promise((resolve, reject) => {
     let timerId = 0;
@@ -167,6 +189,77 @@ function waitForIframeLoad(iframeElement, timeoutMs) {
 
     iframeElement.addEventListener("load", onLoad, { once: true });
   });
+}
+
+function clickMyReportLink() {
+  const candidates = [
+    "a[href='./daily_report/my_report.jsp']",
+    "a[href='/daily_report/my_report.jsp']",
+    "a[href='daily_report/my_report.jsp']",
+    "a[target='iframe'][href*='my_report.jsp']"
+  ];
+
+  for (const selector of candidates) {
+    const link = document.querySelector(selector);
+
+    if (!link) {
+      continue;
+    }
+
+    if (typeof link.click === "function") {
+      link.click();
+      return true;
+    }
+  }
+
+  return false;
+}
+
+async function forceNavigateIframeToMyReport(iframeElement, loadPromise) {
+  const targetUrl = new URL("./daily_report/my_report.jsp", window.location.href).toString();
+
+  try {
+    if (typeof window.set_iframe_cookie === "function") {
+      window.set_iframe_cookie("./daily_report/my_report.jsp");
+    }
+  } catch (_error) {
+  }
+
+  iframeElement.src = targetUrl;
+  return loadPromise;
+}
+
+function buildContextFromLoadedDocument(iframeElement, loadedDocument) {
+  const reportWindow = loadedDocument.defaultView || iframeElement.contentWindow;
+
+  if (!reportWindow) {
+    throw new Error("切换到“我的日报”后无法获取 iframe 上下文。");
+  }
+
+  if (isLoginDocument(loadedDocument)) {
+    return {
+      state: "login",
+      reportWindow,
+      reportDocument: loadedDocument,
+      iframeElement
+    };
+  }
+
+  if (!isReportDocument(loadedDocument)) {
+    return {
+      state: "other",
+      reportWindow,
+      reportDocument: loadedDocument,
+      iframeElement
+    };
+  }
+
+  return {
+    state: "report",
+    reportWindow,
+    reportDocument: loadedDocument,
+    iframeElement
+  };
 }
 
 function triggerSearch(reportWindow, searchButton) {
