@@ -62,6 +62,7 @@ function renderResult(result) {
   const rows = [
     renderRow("时间范围", `${result.startDate} 至 ${result.endDate}`),
     renderRow("总工时", formatHours(result.totalHours)),
+    renderRow("出勤天数", `${result.attendanceDayCount ?? 0} 天`),
     renderRow("记录条数", `${result.rowCount} 条`),
     renderRow("统计时间", formatDateTime(result.fetchedAt))
   ];
