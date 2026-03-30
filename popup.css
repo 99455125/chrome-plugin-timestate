@@ -108,6 +108,10 @@ button:disabled {
   color: #0d6efd;
 }
 
+.status.warning {
+  color: #b54708;
+}
+
 .result {
   margin-top: 12px;
   display: grid;

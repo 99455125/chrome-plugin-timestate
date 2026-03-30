@@ -37,7 +37,7 @@ async function runPreset(preset) {
     }
 
     renderResult(response.result);
-    setStatus("统计完成。");
+    setStatus(response.result.warning || "统计完成。", response.result.warning ? "warning" : "");
   } catch (error) {
     setStatus(error.message || "统计失败。", "error");
   } finally {
@@ -59,12 +59,18 @@ async function getActiveTab() {
 
 function renderResult(result) {
   resultElement.classList.remove("empty");
-  resultElement.innerHTML = [
+  const rows = [
     renderRow("时间范围", `${result.startDate} 至 ${result.endDate}`),
     renderRow("总工时", formatHours(result.totalHours)),
     renderRow("记录条数", `${result.rowCount} 条`),
     renderRow("统计时间", formatDateTime(result.fetchedAt))
-  ].join("");
+  ];
+
+  if (result.invalidHourCount > 0) {
+    rows.push(renderRow("异常工时", `${result.invalidHourCount} 条已忽略`));
+  }
+
+  resultElement.innerHTML = rows.join("");
 }
 
 function renderRow(label, value) {

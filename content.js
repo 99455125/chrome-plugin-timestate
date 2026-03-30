@@ -26,6 +26,14 @@ async function runStatisticsInPage({ startDate, endDate }) {
     throw new Error("未找到主页面中的日报 iframe，请先进入包含“我的日报”的系统主页。");
   }
 
+  if (reportContext.state === "login") {
+    throw new Error("当前会话可能已失效，请先登录考勤系统后重试。");
+  }
+
+  if (reportContext.state !== "report") {
+    throw new Error("未找到日报页面，请先在系统主页中打开“我的日报”后再执行统计。");
+  }
+
   const { reportWindow, reportDocument, iframeElement } = reportContext;
   const startInput = reportDocument.querySelector("#start_time");
   const endInput = reportDocument.querySelector("#end_time");
@@ -67,11 +75,30 @@ function findReportContext() {
   const reportDocument = iframeElement.contentDocument;
   const reportWindow = iframeElement.contentWindow;
 
-  if (!reportDocument || !reportWindow || !isReportDocument(reportDocument)) {
+  if (!reportDocument || !reportWindow) {
     return null;
   }
 
+  if (isLoginDocument(reportDocument)) {
+    return {
+      state: "login",
+      reportWindow,
+      reportDocument,
+      iframeElement
+    };
+  }
+
+  if (!isReportDocument(reportDocument)) {
+    return {
+      state: "other",
+      reportWindow,
+      reportDocument,
+      iframeElement
+    };
+  }
+
   return {
+    state: "report",
     reportWindow,
     reportDocument,
     iframeElement
@@ -98,6 +125,10 @@ async function submitSearchInIframe({ iframeElement, reportWindow, searchButton 
   const loadPromise = waitForIframeLoad(iframeElement, 15000);
   triggerSearch(reportWindow, searchButton);
   const loadedDocument = await loadPromise;
+
+  if (isLoginDocument(loadedDocument)) {
+    throw new Error("当前会话可能已失效，请先登录考勤系统后重试。");
+  }
 
   if (!loadedDocument.querySelector("#maintable")) {
     throw new Error("iframe 已刷新，但未找到日报表格。");
@@ -186,4 +217,12 @@ async function fetchFullReportHtml({ reportWindow, startDate, endDate }) {
   }
 
   return response.text();
+}
+
+function isLoginDocument(doc) {
+  return Boolean(
+    doc.querySelector("#username_input") &&
+    doc.querySelector("#password_input") &&
+    doc.querySelector("#login_btn")
+  );
 }

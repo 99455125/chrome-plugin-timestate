@@ -1,0 +1,234 @@
+<html><head>
+    <title></title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script type="text/javascript" src="../bower_components/jquery/jquery.js"></script>
+    <link rel="stylesheet" href="/bower_components/bootstrap/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/bower_components/font-awesome/css/font-awesome.css">
+    <script type="text/javascript" src="/includes/common.js"></script>
+    <script type="text/javascript" src="/bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="/bower_components/bootstrap/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/bower_components/toastr/toastr.css">
+    <script type="text/javascript" src="/bower_components/toastr/toastr.js"></script>
+    <link rel="stylesheet" href="/bower_components/bootstrapvalidator/dist/css/bootstrapValidator.min.css">
+    <script type="text/javascript" src="/bower_components/bootstrapvalidator/dist/js/bootstrapValidator.min.js"></script>
+    <link rel="stylesheet" href="../bower_components/bootstrap-table/dist/bootstrap-table.min.css">
+    <link rel="stylesheet" href="../bower_components/bootstrap-table/dist/bootstrap-table-locale-all.min.js">
+    <script type="text/javascript" src="../bower_components/bootstrap-table/dist/bootstrap-table.min.js"></script>
+    <link rel="stylesheet" href="../bower_components/datatables/media/css/dataTables.jqueryui.min.css">
+    <script type="text/javascript" src="../bower_components/datatables/media/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="../bower_components/datatables/media/js/dataTables.bootstrap.min.js"></script>
+    <link rel="stylesheet" href="../bower_components/bootstrap3-dialog/dist/css/bootstrap-dialog.min.css">
+    <script type="text/javascript" src="../bower_components/bootstrap3-dialog/dist/js/bootstrap-dialog.min.js"></script>
+    <link rel="stylesheet" href="/bower_components/jquery-ui//themes/start/jquery-ui.css">
+    <link rel="stylesheet" href="/bower_components/jquery-ui//themes/start/theme.css">
+    <script type="text/javascript" language="javascript" src="../scripts/jquery-ui-1.11.1/jquery-ui.js"></script>
+    <script type="text/javascript" language="javascript" src="../scripts/jquery-ui-timepicker-addon.js"></script>
+    <link rel="stylesheet" href="../bower_components/bootstrap-select/dist/css/bootstrap-select.min.css">
+    <script type="text/javascript" src="../bower_components/bootstrap-select/dist/js/bootstrap-select.min.js"></script>
+    <script type="text/javascript" src="../bower_components/jquery.cookie.js"></script>
+
+    <style type="text/css">
+        body{
+            background: url(/images/b.jpg) no-repeat;
+            background-size:100% 100%; 
+            background-attachment:fixed;
+        }
+        #login_box{
+            padding: 35px;
+            border-radius:15px;  /*div圆角*/
+            background: #56666B;
+            color: #fff;
+        }
+        #login_title{
+            color: #000000;
+        }
+    </style>
+    <script type="text/javascript" language="javascript" class="init">
+
+document.onkeydown = function (e) {
+var theEvent = window.event || e;
+var code = theEvent.keyCode || theEvent.which;
+if (code == 13) {
+$("#login_btn").click();
+}
+}
+
+    function GetJsonData() {
+        
+        if ($("#username_input").val().indexOf("@")>0) {
+            var json = {
+                "username": $("#username_input").val(),
+                "password": $("#password_input").val()
+            };
+        } else {
+            var json = {
+                "username": $("#username_input").val()+"@shie.com.cn",
+                "password": $("#password_input").val()
+            };
+        }
+        console.log("json is:"+json);
+
+        return json;
+    }
+
+    $(document).ready(function () {
+        $("#login_btn").click(function () {
+            console.log("xxx"+window.location.protocol);
+            let username=$("#username_input").val();
+            let password=$("#password_input").val();
+            let auth_url="/api/auth";
+
+            //let auth_url=window.location.protocol+"//omp-api.shie.com.cn/auth";
+            //let auth_url=window.location.protocol+"//omp-api.shie.com.cn:3000/auth";
+            //let auth_url=window.location.protocol+"//omp.shie.com.cn/auth";
+            if (username='') {
+                console.log("username is null");
+            }
+
+            let json_data={ "username": username+"@shie.com.cn", "password": password};
+
+            $.ajax({
+                type: "POST",
+                url: auth_url,
+                contentType: "application/json; charset=utf-8",
+                data: JSON.stringify(GetJsonData()),
+                dataType: "json",
+                success: function (data) {
+                    console.log(JSON.stringify(data));
+                    var result=JSON.stringify(data);
+                    console.log(result);
+                    console.log(data["success"]);
+                    $.cookie("username",data['username']);
+                    $.cookie("token", data['token']);
+                    console.log($.cookie("username"));
+                    console.log($.cookie("token"));
+                    if (data["success"]==true) {
+
+
+                        toastr.success(""+data['username']+"系统登录成功,页面调转中...！");
+                        // get user information from domain
+                        let usename=$("#username_input").val();
+                        if (usename.indexOf("@")>0) {
+                            usename=usename.substring(0,usename.indexOf("@"));
+                        }
+
+                        let displayname="xxx";
+                        let mail="xxx@shie.com.cn";
+                        let description="description";
+                        $.ajax({
+                                type: "POST",
+                                url: "/api/finduser",
+                                contentType: "application/json; charset=utf-8",
+                                data: JSON.stringify({"username": usename }),
+                                dataType: "json",
+                                async: false,
+                                success: function (data) {
+                                    console.log(JSON.stringify(data));
+                                    var result=JSON.stringify(data);
+                                    console.log(result);
+                                    console.log(data["success"]);
+                                    if (data["success"]==true) {
+                                        console.log("user exist");
+                                        //console.log(JSON.stringify(data["message"]));
+                                        //console.log(data["message"]);
+                                        //console.log(JSON.parse(data["message"])[0]["dn"]);
+                                        let message=data["message"];
+                                        displayname=JSON.parse(data["message"])[0]["displayName"]
+                                        mail=JSON.parse(data["message"])[0]["mail"]
+                                        description=JSON.parse(data["message"])[0]["description"]
+                                        console.log("displayname is:"+displayname);
+                                        console.log("mail is:"+mail);
+                                        console.log("description is:"+description);
+                                    }
+                                }
+                        });
+                        $.post("./login.jsp", {
+                                    username: usename,
+                                    displayname: displayname,
+                                    mail: mail,
+                                    description: description,
+                                    token: data['token']
+                                }, function (data, textStatus) {
+                                    console.log(data.trim());
+                                    if ("success"==data.trim()) {
+                                        toastr.success("session creation succeed!"); 
+                                        //$(location).attr('href', '/index.html');
+                                        if(top !== self){            
+                                            top.location.href = "/";
+                                        } else window.location.href="/";
+                                    }
+                                    else toastr.warning("session creation failed!"+data.trim())
+                                });
+
+                        
+                    } else {
+                        toastr.warning("用户名或密码错误，系统登录失败！");
+                    }
+                },
+                error: function (data) {
+                    toastr.info("请求失败，请重试！")
+                }
+            });
+            
+        })
+
+    })
+
+    </script></head>
+
+
+
+<body style="">
+    <div class="container" id="top">
+        <div class="row" style="margin-top: 100px;">
+            <div class="col-md-offset-2 col-md-3">
+                <div class="col-md-offset-3 col-md-9">
+                    <img src="/images/shie-logo-mini.png" width="90%" height="90%">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                </div>
+            </div>
+            <div class="col-md-offset-5 col-md-5">
+                <div class="col-md-offset-1 col-md-12">
+                    <h1 id="login_title" style="color: white;">资源池驻场人员管理平台</h1>
+                    
+                </div>
+            </div>
+        </div>
+        <hr>
+        <div class="row">
+            <div class="col-md-5">
+            </div>
+            <div class="col-md-5" id="login_box">
+                <form class="form-horizontal">
+                    <div class="form-group">
+                        <label class="col-md-3 control-label">用户名</label> <!--control-label标签对齐 -->
+                        <div class="col-md-9">
+                            <input id="username_input" class="form-control" type="text" placeholder="请输入用户名(域账号)">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="col-md-3 control-label">密码</label>
+                        <div class="col-md-9">
+                            <input id="password_input" class="form-control" type="password" placeholder="请输入密码">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="col-md-offset-7 col-md-5">
+                            <input id="login_btn" type="button" class="form-control" value="登录"> 
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://password.shie.com.cn/iisadmpwd/" target="_blank">域账号密码修改</a>
+                        </div>
+
+                    </div>
+
+                </form>
+            </div>
+            <div class="col-md-4">
+            </div>
+        </div>
+    </div>
+
+
+
+</body></html>
