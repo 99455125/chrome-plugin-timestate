@@ -48,8 +48,17 @@ h2 {
   font-weight: 700;
 }
 
+.meta {
+  margin-top: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #20446d;
+}
+
 .hint {
-  margin-top: 8px;
+  margin-top: 10px;
   font-size: 12px;
   line-height: 1.5;
   color: #57627a;
@@ -57,8 +66,13 @@ h2 {
 
 .actions {
   display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 10px;
   margin-top: 14px;
+}
+
+.panel-entry {
+  margin-top: 10px;
 }
 
 button {
@@ -90,6 +104,14 @@ button:disabled {
   background: linear-gradient(135deg, #15a46b 0%, #29bf84 100%);
   color: #fff;
   box-shadow: 0 10px 24px rgba(21, 164, 107, 0.22);
+}
+
+.ghost {
+  width: 100%;
+  background: linear-gradient(135deg, #eef4ff 0%, #e2ecff 100%);
+  color: #1f3b63;
+  border: 1px solid #bfd0ef;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35);
 }
 
 .status {

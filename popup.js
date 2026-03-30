@@ -1,5 +1,6 @@
 const lastMonthButton = document.getElementById("lastMonthButton");
 const currentMonthButton = document.getElementById("currentMonthButton");
+const openPanelButton = document.getElementById("openPanelButton");
 const statusElement = document.getElementById("status");
 const resultElement = document.getElementById("result");
 
@@ -11,6 +12,7 @@ init();
 async function init() {
   lastMonthButton.addEventListener("click", () => runPreset("lastMonth"));
   currentMonthButton.addEventListener("click", () => runPreset("currentMonth"));
+  openPanelButton.addEventListener("click", toggleFloatingPanel);
 
   const { lastStatistics } = await chrome.storage.local.get("lastStatistics");
   if (lastStatistics) {
@@ -40,6 +42,38 @@ async function runPreset(preset) {
     setStatus(response.result.warning || "统计完成。", response.result.warning ? "warning" : "");
   } catch (error) {
     setStatus(error.message || "统计失败。", "error");
+  } finally {
+    setLoading(false);
+  }
+}
+
+async function toggleFloatingPanel() {
+  setLoading(true);
+  setStatus("正在切换页面悬浮窗…", "loading");
+
+  try {
+    const activeTab = await getActiveTab();
+
+    if (!activeTab.id) {
+      throw new Error("未找到当前标签页。");
+    }
+
+    await chrome.scripting.executeScript({
+      target: { tabId: activeTab.id },
+      files: ["content.js"]
+    });
+
+    const response = await sendTabMessageWithTimeout(activeTab.id, {
+      type: "TOGGLE_FLOATING_PANEL"
+    });
+
+    if (!response?.ok) {
+      throw new Error(response?.error || "切换悬浮窗失败。");
+    }
+
+    setStatus(response.visible ? "悬浮窗已打开。" : "悬浮窗已隐藏。");
+  } catch (error) {
+    setStatus(error.message || "切换悬浮窗失败。", "error");
   } finally {
     setLoading(false);
   }
@@ -89,9 +123,21 @@ function sendRuntimeMessageWithTimeout(message) {
   ]);
 }
 
+function sendTabMessageWithTimeout(tabId, message) {
+  return Promise.race([
+    chrome.tabs.sendMessage(tabId, message),
+    new Promise((_, reject) => {
+      window.setTimeout(() => {
+        reject(new Error("页面悬浮窗操作超时，请确认当前页面已打开考勤系统。"));
+      }, MESSAGE_TIMEOUT_MS);
+    })
+  ]);
+}
+
 function setLoading(loading) {
   lastMonthButton.disabled = loading;
   currentMonthButton.disabled = loading;
+  openPanelButton.disabled = loading;
 }
 
 function setStatus(message, type = "") {

@@ -4,31 +4,32 @@ import { parseWorkHours } from "./lib/report-parser.mjs";
 const DEFAULT_ORIGIN = "http://10.19.3.38";
 const SUPPORTED_HOST = "10.19.3.38";
 
-chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message?.type !== "RUN_STATISTICS") {
     return undefined;
   }
 
-  handleRunStatistics(message)
+  handleRunStatistics(message, sender)
     .then((result) => sendResponse({ ok: true, result }))
     .catch((error) => sendResponse({ ok: false, error: error.message }));
 
   return true;
 });
 
-async function handleRunStatistics(message) {
+async function handleRunStatistics(message, sender) {
   const { preset, startDate, endDate } = resolveDateRange(message);
-  const origin = resolveOrigin(message.activeTabUrl);
-  const canUseContentScript = isSupportedHost(message.activeTabUrl);
+  const activeTabId = message.activeTabId ?? sender?.tab?.id;
+  const activeTabUrl = message.activeTabUrl ?? sender?.tab?.url ?? DEFAULT_ORIGIN;
+  const origin = resolveOrigin(activeTabUrl);
 
-  if (!message.activeTabId || !canUseContentScript) {
+  if (!activeTabId) {
     throw new Error("请先打开考勤系统主页面后再执行统计。");
   }
 
-  await ensureContentScriptReady(message.activeTabId);
+  await ensureContentScriptReady(activeTabId);
 
   const html = await runPageSearchAndGetHtml({
-    tabId: message.activeTabId,
+    tabId: activeTabId,
     origin,
     startDate,
     endDate
