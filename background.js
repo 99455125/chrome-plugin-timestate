@@ -25,6 +25,8 @@ async function handleRunStatistics(message) {
     throw new Error("请先打开考勤系统主页面后再执行统计。");
   }
 
+  await ensureContentScriptReady(message.activeTabId);
+
   const html = await runPageSearchAndGetHtml({
     tabId: message.activeTabId,
     origin,
@@ -91,16 +93,57 @@ function isSupportedHost(activeTabUrl) {
 }
 
 async function runPageSearchAndGetHtml({ tabId, origin, startDate, endDate }) {
-  const response = await chrome.tabs.sendMessage(tabId, {
-    type: "RUN_STATISTICS_IN_PAGE",
-    origin,
-    startDate,
-    endDate
-  });
+  let response;
+
+  try {
+    response = await chrome.tabs.sendMessage(tabId, {
+      type: "RUN_STATISTICS_IN_PAGE",
+      origin,
+      startDate,
+      endDate
+    });
+  } catch (error) {
+    throw new Error(normalizeConnectionError(error));
+  }
 
   if (!response?.ok) {
     throw new Error(response?.error || "页面内执行搜索失败。");
   }
 
   return response.html;
+}
+
+async function ensureContentScriptReady(tabId) {
+  try {
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      files: ["content.js"]
+    });
+  } catch (error) {
+    throw new Error(normalizeInjectionError(error));
+  }
+}
+
+function normalizeConnectionError(error) {
+  const message = error?.message || String(error || "");
+
+  if (message.includes("Receiving end does not exist")) {
+    return "页面脚本尚未就绪，已尝试自动注入但仍失败，请刷新考勤系统主页面后重试。";
+  }
+
+  return `页面通信失败: ${message}`;
+}
+
+function normalizeInjectionError(error) {
+  const message = error?.message || String(error || "");
+
+  if (message.includes("Cannot access contents of the page")) {
+    return "当前页面不允许注入脚本，请切到考勤系统主页面后重试。";
+  }
+
+  if (message.includes("The extensions gallery cannot be scripted")) {
+    return "当前标签页不是业务系统页面，请切到考勤系统主页面后重试。";
+  }
+
+  return `注入页面脚本失败: ${message}`;
 }
