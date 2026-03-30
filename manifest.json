@@ -1,0 +1,33 @@
+{
+  "manifest_version": 3,
+  "name": "日报工时统计",
+  "version": "0.1.0",
+  "description": "统计内部考勤系统 my_report.jsp 的当月与上月工时。",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "scripting"
+  ],
+  "host_permissions": [
+    "http://10.19.3.38/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "日报工时统计",
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "http://10.19.3.38/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}

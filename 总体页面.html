@@ -1,0 +1,304 @@
+<html><head>
+		<meta charset="utf-8">
+		<title>资源池驻场人员管理平台</title>
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no">
+		
+		<link rel="stylesheet" type="text/css" href="css/page.css">
+		<!--
+				<link rel="stylesheet" href="https://lib.sinaapp.com/js/bootstrap/4.2.1/css/bootstrap.min.css">
+				<button type="button" class="btn btn-primary" data-bs-toggle="collapse" data-bs-target="#demo">折叠</button>
+													<span class="badge badge-pill badge-primary float-right">3</span>
+		<link rel="stylesheet" href="./bootstrap-5.0.2-dist/css/bootstrap.min.css">
+		<script src="./bootstrap-5.0.2-dist/js/bootstrap.min.js"></script>
+		-->
+
+		<link href="plugins/css/icons.min.css" rel="stylesheet" type="text/css">
+		<link rel="stylesheet" href="./fontawesome-free-6.6.0-web/css/all.min.css">
+		<script type="text/javascript" src="js/jquery.min.js"></script>
+		<script type="text/javascript" src="./bower_components/jquery.cookie.js"></script>
+
+		<script type="text/javascript" src="./bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+		<link rel="stylesheet" href="./bower_components/bootstrap/dist/css/bootstrap.min.css">
+		<link rel="stylesheet" href="./bower_components/bootstrap3-dialog/dist/css/bootstrap-dialog.min.css">
+		<script type="text/javascript" src="./bower_components/bootstrap3-dialog/dist/js/bootstrap-dialog.min.js"></script>
+		<link rel="stylesheet" href="./bower_components/toastr/toastr.css">
+		<script type="text/javascript" src="./bower_components/toastr/toastr.js"></script>
+	
+		<link rel="stylesheet" href="./bower_components/bootstrapvalidator/dist/css/bootstrapValidator.min.css">
+		<script type="text/javascript" src="./bower_components/bootstrapvalidator/dist/js/bootstrapValidator.min.js"></script>
+        <script type="text/javascript">
+			function nav_restore(){
+				$(".content-page").css({left: "220px"});					
+					$(".nav-left").css({width: "220px"});					
+					$(".nav-right").css({"padding-left": "220px"});		
+					$(".content-page").css({"top": "120px"});		
+					$("#logo").attr('src','./images/shie-logo-mini.png');		
+					$("#logo").attr('width','80%');	
+					$("#homepage_menu").show();
+					$("#contract_menu").show();
+					$("#daily_menu").show();
+					$("#admin_menu").show();
+					$("#user_menu").show();
+					$("#nav-top").show();
+					//$("#portal_menu").html("<button type='button' id='extend_btn' onclick='nav_collapse()' class='btn btn-default btn-sm'><</button>");
+					$("#portal_menu").html("<div id='collapse_btn' onclick='nav_collapse()' style='display: inline-block; padding: 12px 15px 12px 18px;'><i class='fa-solid fa-arrow-left'></i></div>");
+					$.cookie("menu_style","long");
+
+				}
+			function nav_collapse(){
+				$(".content-page").css({left: "50px"});					
+					$(".nav-left").css({width: "50px"});					
+					$(".nav-right").css({"padding-left": "50px"});		
+					$(".content-page").css({"top": "0px"});	
+					$("#logo").attr('src','./images/shie-logo-square.png');		
+					$("#logo").attr('width','100%');	
+					$("#homepage_menu").hide();
+					$("#contract_menu").hide();
+					$("#finance_menu").hide();
+					$("#daily_menu").hide();
+					$("#admin_menu").hide();
+					$("#user_menu").hide();
+					$("#nav-top").hide();
+					//$("#portal_menu").html("<button type='button' id='extend_btn' onclick='nav_restore()' class='btn btn-default btn-sm'>></button>");
+					$("#portal_menu").html("<div id='extend_btn' onclick='nav_restore()' style='display: inline-block; padding: 12px 15px 12px 18px;'><i class='fa-solid fa-arrow-right'></i></div>");
+					$.cookie("menu_style","short");
+
+			}
+			function nav_show(){
+				$(".content-page").css({left: "220px"});					
+					$(".nav-left").css({width: "220px"});					
+					$(".nav-right").css({"padding-left": "220px"});		
+					//$(".content-page").css({"top": "120px"});		
+					$("#logo").attr('src','./images/gmp.png');		
+					$("#logo").attr('width','80%');	
+					$("#homepage_menu").show();
+					$("#contract_menu").show();
+					$("#finance_menu").show();
+					$("#daily_menu").show();
+					$("#user_menu").show();
+					$("#nav-top").show();
+					//$("#portal_menu").html("<button type='button' id='extend_btn' onclick='nav_collapse()' class='btn btn-default btn-sm'><</button>");
+					$("#portal_menu").html("<div id='collapse_btn' onclick='nav_collapse()' style='display: inline-block; padding: 12px 15px 12px 18px;'><i class='fa-solid fa-arrow-left'></i></div>");	
+			}
+
+			function set_iframe_cookie(url) {
+				console.log("url is:" + url);
+				$.cookie("iframe_page",url);
+			}
+
+			$(function () {
+				console.log("from homepage.");	
+				console.log("menu_style is: "+$.cookie("menu_style"));
+				console.log("iframe page is: "+$.cookie("iframe_page"));
+				if ($.cookie("menu_style")=="short") {
+					console.log("menu style is short.");
+					nav_collapse();
+				}
+
+				if ($.cookie("iframe_page")!=null) {
+					console.log("setting mainframe to:" + $.cookie("iframe_page"));
+					$("#mainframe").attr('src',$.cookie("iframe_page"));
+				} else {
+					$("#mainframe").attr('src',"/home/index.jsp");
+				}
+
+				$("#collapse_btn").click(function () {
+					console.log("click collapse_btn menu.");
+					nav_collapse();
+	
+				});
+				$("#extend_btn").click(function () {
+					console.log("click extend_btn menu.");
+					nav_restore();
+				});
+
+				$("[id='update_password']").click(function () {
+                var usr=$(this).parent().children()[0].value;
+                console.log('./user_update_dialog.jsp?no=' + usr);
+					BootstrapDialog.show({
+						title: '域密码更新【' + usr + '】',
+						message: $('<div></div>').load('https://password.shie.com.cn/iisadmpwd/'),
+						type: BootstrapDialog.TYPE_PRIMARY, // <-- Default value is BootstrapDialog.TYPE_PRIMARY
+						size: BootstrapDialog.SIZE_NORMAL,
+						buttons: [
+						{
+								label: '关闭',
+								action: function (dialogItself) {
+									dialogItself.close();
+								}
+							}
+						]
+					});
+            	});
+
+        		$("#update_myself").click(function () {
+					//var usr=$(this).parent().children()[0].value;
+					//console.log('./user_update_dialog.jsp?no=' + usr);
+					BootstrapDialog.show({
+						title: '信息更新',
+						message: $('<div></div>').load('/admin/my_update_dialog.jsp'),
+						type: BootstrapDialog.TYPE_PRIMARY, // <-- Default value is BootstrapDialog.TYPE_PRIMARY
+						size: BootstrapDialog.SIZE_NORMAL,
+						buttons: [
+						{
+								label: '关闭',
+								action: function (dialogItself) {
+									dialogItself.close();
+								}
+							}, 
+							{
+								label: '提交',
+								cssClass: 'btn-primary',
+								action: function (dialogItself) {
+									$.post("/admin/my_update_dialog_do.jsp", {
+										is_support: $("#d_is_support").val(),
+										support_type: $("#d_support_type").val(),
+										project_name: $("#d_project_name").val(),
+										okd_pwd: $("#d_okd_pwd").val(),
+										phone: $("#d_phone").val(),
+										user_name: $("#d_user_name").val()
+									}, function (data, textStatus) {
+										if (data.trim() != "") {
+											toastr.info("【" + $("#d_user_name").val() + "】用户信息已更新！" + data.trim());
+											dialogItself.close();
+											location.reload();
+										}
+									});
+								}
+							}
+						]
+					});
+           		 });
+			});
+		</script>
+	</head>
+	<body style="">
+		<div class="page" id="app">
+			<div class="nav-left" style="width: 220px;">
+				<div class="LogoName">
+					<img id="logo" src="./images/shie-logo-mini.png" width="80%">		
+			
+				</div>
+				<div class="navDiv">
+
+					<!--
+					<div class="navName" id="portal_menu">员工门户&nbsp;&nbsp;<button type="button" id="collapse_btn" class="btn btn-default btn-sm" data-bs-toggle="collapse" data-bs-target="#demo"><</button></div>
+					<div id="collapse_btn"  style="display: inline-block;" onclick="nav_collapse()"><i class="fa-solid fa-arrow-left"></i></div>
+					-->
+					<div class="nav-list">
+						<ul style="padding-left: 0rem;">
+							<li class="nav-tab nav-ul">
+								
+								<div id="portal_menu"><div id="collapse_btn" onclick="nav_collapse()" style="display: inline-block; padding: 12px 15px 12px 18px;"><i class="fa-solid fa-arrow-left"></i></div></div>
+
+							</li>
+
+							<li class="nav-tab waves-effect nav-show">
+								<a href="home/index.jsp" class="li-a active" target="iframe" onclick="set_iframe_cookie($(this).attr('href'));nav_restore();"><i class="fa-solid fa-house"></i><div id="homepage_menu" style="display: inline-block;">&nbsp;&nbsp;主页</div>
+								</a>
+							</li>
+
+							<li class="nav-tab nav-ul a_active nav-show">
+								<a href="javascript:void[0]" class="li-a active" onclick="nav_restore()"><i class="fa-solid fa-book"></i><div id="daily_menu" style="display: inline-block;">&nbsp;&nbsp;日报系统</div>
+									<!--<i class='bx bx-chevron-right' style="float: right;"></i>-->
+								</a>
+								<div class="nav-box" style="height: 0px;">
+									<a href="./daily_report/my_report.jsp" class="li-a-a active-li-a" target="iframe" onclick="set_iframe_cookie($(this).attr('href'));"><i class="fa fa-book" aria-hidden="true"></i>&nbsp;我的日报</a>
+									<a href="./daily_report/report_review.jsp" class="li-a-a" target="iframe" onclick="set_iframe_cookie($(this).attr('href'));"><i class="fa-solid fa-hand"></i>&nbsp;日报审核</a>
+									<a href="./daily_report/report_item.jsp" class="li-a-a" target="iframe" onclick="set_iframe_cookie($(this).attr('href'));"><i class="fa-solid fa-gears"></i>&nbsp;日报项目配置</a>
+									<a href="./daily_report/report_log.jsp" class="li-a-a" target="iframe" onclick="set_iframe_cookie($(this).attr('href'));"><i class="fa-regular fa-clipboard"></i>&nbsp;日报记录查询</a>
+									<a href="./daily_report/report_log_team.jsp" class="li-a-a" target="iframe" onclick="set_iframe_cookie($(this).attr('href'));"><i class="fa-solid fa-list-ol"></i>&nbsp;项目日报查询</a>
+									<a href="./daily_report/project_report.jsp" class="li-a-a" target="iframe" onclick="set_iframe_cookie($(this).attr('href'));"><i class="fa-solid fa-chart-simple"></i>&nbsp;项目日报统计</a>
+									<a href="./daily_report/superset.jsp" class="li-a-a" target="iframe" onclick="set_iframe_cookie($(this).attr('href'));"><i class="fa-solid fa-chart-simple"></i>&nbsp;日报系统看板</a>
+
+								</div>
+							</li>
+							<li class="nav-tab nav-ul">
+								<a href="javascript:void[0]" class="li-a" onclick="nav_restore()"><i class="fa-solid fa-gear"></i><div id="admin_menu" style="display: inline-block;">&nbsp;&nbsp;系统管理</div>
+									</a>
+								<div class="nav-box" style="height: 0px;"> 
+									<a href="./admin/user.jsp" class="li-a-a" target="iframe" onclick="set_iframe_cookie($(this).attr('href'));"><i class="fa-solid fa-users"></i>&nbsp;用户管理</a>
+									<a href="./admin/menu.jsp" class="li-a-a" target="iframe" onclick="set_iframe_cookie($(this).attr('href'));"><i class="fa-solid fa-sitemap"></i>&nbsp;菜单管理</a>
+									<!--
+									<a href="./project/project_code_manage.jsp" class="li-a-a" target="iframe" onclick="set_iframe_cookie($(this).attr('href'));"><i class="fa-solid fa-diagram-project"></i>&nbsp;系统名称管理</a>
+									-->
+									<a href="./admin/proj.jsp" class="li-a-a" target="iframe" onclick="set_iframe_cookie($(this).attr('href'));"><i class="fa-solid fa-diagram-project"></i>&nbsp;项目名称管理</a>
+									<a href="./admin/dept.jsp" class="li-a-a" target="iframe" onclick="set_iframe_cookie($(this).attr('href'));"><i class="fa-solid fa-building"></i>&nbsp;部门信息管理</a>
+<!--
+									<a href="./supplier/index.jsp" class="li-a-a" target="iframe" onclick="set_iframe_cookie($(this).attr('href'));"><i class="fa-solid fa-person-walking-arrow-loop-left"></i>&nbsp;合作方信息管理</a>
+									<a href="./finance/accounting_subject.jsp" class="li-a-a" target="iframe" onclick="set_iframe_cookie($(this).attr('href'));"><i class="fa-solid fa-receipt"></i>&nbsp;会计科目管理</a>
+-->
+								</div>
+							</li>
+							<li class="nav-tab nav-ul">
+								<a href="javascript:void[0]" class="li-a" onclick="nav_restore()"><i class="fa-solid fa-user"></i><div id="user_menu" style="display: inline-block;">&nbsp;&nbsp;用户设置</div>
+									</a>
+								<div class="nav-box" style="height: 0px;"> 
+									<a href="#" class="li-a-a" id="update_myself"><i class="fa-solid fa-circle-user"></i>&nbsp;我的信息</a>
+									<a href="/login/login_out.jsp" class="li-a-a" target="_self"><i class="fa-solid fa-right-from-bracket"></i>&nbsp;注销</a>
+								</div>
+							</li>
+
+						</ul> 
+					</div>
+				</div>
+			</div>
+			<div class="nav-right" style="padding-left: 220px;"> 
+				<div class="nav-top" id="nav-top">
+					<img src="./images/slogan.png" width="100%">
+				</div>
+				<div class="content-page" style="left: 220px; top: 120px;">
+					<iframe name="iframe" id="mainframe" width="100%" height="100%" frameborder="0" src="./daily_report/my_report.jsp"></iframe>
+				</div>
+			</div>
+		</div>
+
+
+		<script type="text/javascript">
+			$(function() {
+				let navflag = false;
+				$('.nav-tab').click(function() {
+					$(this).siblings().each(function() {
+						$(this).removeClass('a_active');
+						// $(this).removeClass('a_active');
+						$(this).find('.nav-box').css('height', '0')
+						//关闭右侧箭头
+						if ($(this).attr('class').indexOf('nav-ul') != -1) {
+							$(this).find('.bx-chevron-right').css('transform', 'rotateZ(0deg)')
+							$(this).find('.bx-chevron-right').css('transition', 'all .5s')
+							$(this).removeClass('nav-show')
+							// $(this).find('div').removeClass('nav-box')
+						}
+					})
+					//当前选中
+					$(this).addClass('a_active')
+					$(this).find('.li-a').addClass('active')
+					// 打开右侧箭头
+					$(this).find('.bx-chevron-right').css('transform', 'rotateZ(90deg)')
+					$(this).find('.bx-chevron-right').css('transition', 'all .5s')
+					$(this).addClass('nav-show')
+					// $(this).find('div').addClass('nav-box')
+				})
+				/* 二级菜单a点击事件 */
+				$(".li-a-a").click(function() {
+					$(".li-a-a").each(function() {
+						$(this).removeClass('active-li-a');
+					})
+					$(this).addClass('active-li-a');
+				})
+			})
+			// const vue = new Vue({
+			// 	el:'#app',
+			// 	data:{
+
+			// 	},
+			// 	methods:{
+			// 		liCli(){
+
+			// 		}
+			// 	}
+			// })
+		</script>
+	
+
+</body></html>

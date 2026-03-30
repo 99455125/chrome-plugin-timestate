@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日报工时统计</title>
+    <link rel="stylesheet" href="popup.css">
+  </head>
+  <body>
+    <main class="popup">
+      <section class="card">
+        <h1>日报工时统计</h1>
+        <p class="hint">迭代 1：支持上月整月、当月截至今日的快速统计。</p>
+        <div class="actions">
+          <button id="lastMonthButton" class="primary" type="button">上月工时统计</button>
+          <button id="currentMonthButton" class="secondary" type="button">当月工时统计</button>
+        </div>
+        <p id="status" class="status">等待执行</p>
+      </section>
+
+      <section class="card result-card">
+        <h2>统计结果</h2>
+        <dl id="result" class="result empty">
+          <div class="row">
+            <dt>时间范围</dt>
+            <dd>暂无</dd>
+          </div>
+          <div class="row">
+            <dt>总工时</dt>
+            <dd>--</dd>
+          </div>
+          <div class="row">
+            <dt>记录条数</dt>
+            <dd>--</dd>
+          </div>
+          <div class="row">
+            <dt>请求地址</dt>
+            <dd>--</dd>
+          </div>
+          <div class="row">
+            <dt>统计时间</dt>
+            <dd>--</dd>
+          </div>
+        </dl>
+      </section>
+    </main>
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>

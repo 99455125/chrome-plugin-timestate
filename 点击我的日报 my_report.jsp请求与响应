@@ -1,0 +1,2610 @@
+请求： 
+
+curl ^"http://10.19.3.38/daily_report/my_report.jsp^" ^
+  -H ^"Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7^" ^
+  -H ^"Accept-Language: zh-CN,zh;q=0.9^" ^
+  -H ^"Cache-Control: max-age=0^" ^
+  -H ^"Connection: keep-alive^" ^
+  -H ^"Content-Type: application/x-www-form-urlencoded^" ^
+  -b ^"JSESSIONID=3A9AFD48F124515C079B1CFAD5E208A6; menu_style=long; iframe_page=.^%^2Fdaily_report^%^2Fmy_report.jsp^" ^
+  -H ^"Origin: http://10.19.3.38^" ^
+  -H ^"Referer: http://10.19.3.38/daily_report/my_report.jsp^" ^
+  -H ^"Upgrade-Insecure-Requests: 1^" ^
+  -H ^"User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36^" ^
+  --data-raw ^"start_time=2026-03-01^&end_time=2026-03-31^&search=^%^E6^%^90^%^9C^%^E7^%^B4^%^A2^" ^
+  --insecure
+
+响应：
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<html>
+<head>
+    <title>我的日报</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <link href="../css/shie.css" rel="stylesheet" type="text/css">
+    
+
+    
+    <script type="text/javascript" src="../bower_components/jquery/jquery.js"></script>
+
+
+    <link rel="stylesheet" href="../bower_components/bootstrap/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../bower_components/font-awesome/css/font-awesome.css">
+    <script type="text/javascript" src="../includes/common.js"></script>
+
+    <script type="text/javascript" src="../bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="../bower_components/bootstrap/dist/css/bootstrap.min.css">
+
+    <link rel="stylesheet" href="../bower_components/toastr/toastr.css">
+    <script type="text/javascript" src="../bower_components/toastr/toastr.js"></script>
+
+    <link rel="stylesheet" href="../bower_components/bootstrapvalidator/dist/css/bootstrapValidator.min.css">
+    <script type="text/javascript"
+            src="../bower_components/bootstrapvalidator/dist/js/bootstrapValidator.min.js"></script>
+
+    <link rel="stylesheet" href="../bower_components/bootstrap-table/dist/bootstrap-table.min.css">
+    <link rel="stylesheet" href="../bower_components/bootstrap-table/dist/bootstrap-table-locale-all.min.js">
+    <script type="text/javascript" src="../bower_components/bootstrap-table/dist/bootstrap-table.min.js"></script>
+
+    <link rel="stylesheet" href="../bower_components/datatables/media/css/dataTables.jqueryui.min.css">
+    <script type="text/javascript" src="../bower_components/datatables/media/js/jquery.dataTables.min.js"></script>
+
+    <script type="text/javascript" src="../bower_components/datatables/media/js/dataTables.bootstrap.min.js"></script>
+
+    <link rel="stylesheet" href="../bower_components/bootstrap3-dialog/dist/css/bootstrap-dialog.min.css">
+    <script type="text/javascript" src="../bower_components/bootstrap3-dialog/dist/js/bootstrap-dialog.min.js"></script>
+
+    <link rel="stylesheet" href="../bower_components/jquery-ui//themes/start/jquery-ui.css">
+    <link rel="stylesheet" href="../bower_components/jquery-ui//themes/start/theme.css">
+    <script type="text/javascript" language="javascript" src="../scripts/jquery-ui-1.11.1/jquery-ui.js"></script>
+    <script type="text/javascript" language="javascript" src="../scripts/jquery-ui-timepicker-addon.js"></script>
+
+    <link rel="stylesheet" href="../bower_components/bootstrap-select/dist/css/bootstrap-select.min.css">
+    <script type="text/javascript" src="../bower_components/bootstrap-select/dist/js/bootstrap-select.min.js"></script>
+    <script type="text/javascript" src="../bower_components/jquery.cookie.js"></script>
+
+    <script type="text/javascript" language="javascript" class="init">
+        function showdate(n) {
+            var uom = new Date(new Date() - 0 + n * 86400000);
+            uom = uom.getFullYear() + "-" + (uom.getMonth() + 1) + "-" + uom.getDate();
+            return uom;
+        }
+
+        function pick_date() {
+            console.log("pick report date");
+            $("#check_time").datepicker({dateFormat: "yy-mm-dd"}).datepicker("setDate", showdate(0));
+        }
+        function change_proj(proj_code) {
+            console.log(proj_code);
+        }
+
+        function change_item(no, item_type, my) {
+            console.log(no+"xxxxxx"+item_type);
+            console.log(my.parent().parent().children().find("select[name='sub_item']")[0]);
+            no=no--;
+            $.post("./get_item_type_do.jsp", {
+                item_type: item_type,
+                }, function (data, textStatus) {
+                    if (data.trim() != "") {
+                        var sub_item=new Array();
+                        sub_item=data.split(',');
+                        console.log(sub_item);
+                        $("#sub_item"+no).empty();
+                        var $current_sub_item=$('#tbl').find("#sub_item"+no);
+                        sub_item.forEach(function(item){
+                            optText=item.split('/')[1].trim();
+                            optValue=item.split('/')[0].trim();
+                            $("#sub_item"+no).append("<option value='"+optValue+"'>"+optText+"</option>");
+                        })
+                    }
+            });
+
+        }
+        $(document).ready(function () {
+
+            
+            $("#start_time").datepicker({dateFormat: "yy-mm-dd"}).datepicker("setDate", showdate(-6));
+            $("#end_time").datepicker({dateFormat: "yy-mm-dd"}).datepicker("setDate", showdate(+1));
+
+            $('#start_time').val('2026-03-01');
+            $('#end_time').val('2026-03-31');
+            $("#d_proj_code").change(function () {
+                toastr.info("xxx");
+            })
+
+            var table = $('#maintable').DataTable({
+                // "ordering": true
+                "order": [[3, "desc"]],
+                "lengthMenu": [ 20, 50, 100]
+            });
+
+
+            $("[name='log_btn']").click(function () {
+                var build_no = $(this).parent().children()[0].value;
+                var jenkins_job = $(this).parent().children()[1].value;
+                var proj_code = $("#proj_code_search").find("option:selected").val();
+                var proj_name = $(this).parent().parent().children()[2].innerHTML.trim();
+
+                console.log('./jenkins_deploy_log.jsp?proj_code=' + proj_code + jenkins_job + build_no);
+                BootstrapDialog.show({
+                    title: '发布日志【' + proj_name + '】',
+                    message: $('<div></div>').load('./jenkins_deploy_log.jsp?build_no=' + build_no + '&jenkins_job=' + jenkins_job),
+                    type: BootstrapDialog.TYPE_PRIMARY, // <-- Default value is BootstrapDialog.TYPE_PRIMARY
+                    size: BootstrapDialog.SIZE_WIDE,
+                    buttons: [
+                        {
+                            label: '关闭',
+                            action: function (dialogItself) {
+                                dialogItself.close();
+                            }
+                        }
+                    ]
+                });
+            });
+            $("#add_btn").click(function () {
+                var tmpid = $(this).parent().children()[0].value;
+                var proj_code = $("#proj_code_search").find("option:selected").val();
+                var sub_code=proj_code.split('-')[0];
+                var proj_name = $("#proj_code_search").find("option:selected").text().trim();
+                console.log($("#proj_code_search").index());
+                if ($("#proj_code_search option").index($("#proj_code_search option:selected")) < 0) {
+                    toastr.info("请选择提交的日报系统！");
+                    $("#proj_code_search").select();
+                    $(":button [data-id]").css("background","yellow");
+                    $('.selectpicker').selectpicker('show');
+
+                    console.log("not valid");
+                    return false;
+                }
+
+                BootstrapDialog.show({
+                    title: '系统日报【' + proj_name + '】,日期：<input disabled="disabled" id="check_time" name="check_time" type="date" style="color: dodgerblue; " placeholder="YYYY-MM-DD" value="2026-03-30">',
+                    message: $('<div></div>').load('./daily_report_dialog.jsp?sub_code=' + sub_code),
+                    type: BootstrapDialog.TYPE_PRIMARY, // <-- Default value is BootstrapDialog.TYPE_PRIMARY
+                    size: BootstrapDialog.SIZE_WIDE,
+                    closeByKeyboard: false,
+                    closeByBackdrop: false,
+                    dataBackdrop: false,
+                    draggable: true,
+                    buttons: [
+                        {
+                            label: '关闭',
+                            icon: 'glyphicon glyphicon-remove',
+                            cssClass: 'btn-secondary',
+                            action: function (dialogItself) {
+                                dialogItself.close();
+                            }
+                        },
+                        {
+                            label: '增加',
+                            icon: 'glyphicon glyphicon-plus',
+                            cssClass: 'btn-success',
+                            action: function (dialogItself) {
+                                var $tableBody = $('#tbl').find("tbody"),                                
+                                $trLast = $tableBody.find("tr:last"),
+                                $trNew = $trLast.clone(true);
+                                
+
+                                var chosen1=$tableBody.find("tr:last td:eq(1) option:selected").text();
+                                var chosen2=$tableBody.find("tr:last td:eq(2) option:selected").val();
+                                var chosen3=$tableBody.find("tr:last td:eq(3) option:selected").text();
+                               
+                                console.log($trNew.children()[0].innerHTML);
+                               
+                                $trNew.children()[0].innerHTML++;
+                                var index=$trNew.children()[0].innerHTML;
+                                $trNew.children().find("select[name='sub_item']").attr('id',"sub_item"+index);
+
+                                $trLast.after($trNew);
+                                $(".flag:not(:first)").removeAttr("disabled");
+
+                                $tableBody.find("tr:last td:eq(1) option").each(function(){
+                                    if($(this).text()==chosen1){
+                                        $(this).attr("selected",true);
+                                    }
+                                });
+
+                                $tableBody.find("tr:last td:eq(2) option").each(function(){
+                                    if($(this).val()==chosen2){
+                                        $(this).attr("selected",true);
+                                    }
+                                });
+
+                                $tableBody.find("tr:last td:eq(3) option").each(function(){
+                                    if($(this).text()==chosen3){
+                                        $(this).attr("selected",true);
+                                    }
+                                });
+                            }
+                        },
+                        {
+                            label: '删除',
+                            icon: 'glyphicon glyphicon-minus',
+                            cssClass: 'btn-danger',
+                            action: function (dialogItself) {
+                                //dialogItself.close();
+                                var $check_boxes = $("input[name='checkbox']:checked");                               
+                                $($check_boxes).each(function(){
+                                    var row=$(this).parent().parent();
+                                    row.remove();                               
+                                });                                                     
+                            }
+                        },
+                        {
+                            label: '提交',
+                            icon: 'glyphicon glyphicon-send',
+                            cssClass: 'btn-primary',
+                            action: function (dialogItself) {
+                                //var content= $("#detail_table").html();
+                                var d_proj_code = $("#v_proj_code").val();
+                                //console.log("table content:"+content);
+
+                                //获取全选之外的checkbox
+                                //var $check_boxes = $("input[name='checkbox']:checked");
+                                var $check_boxes = $("input[name='checkbox']");
+                                //var button_remove = $(".red");
+                                console.log($check_boxes.length);
+
+                                //if($check_boxes.length<=0){
+                                //    console.log($check_boxes.length);
+                                //    toastr.info('请勾选日报结果！');
+                                //    return;
+                                //}
+                                var item_content_array = new Array();
+                                var item_cost = new Array();
+                                var item_all = new Array();
+                                var vdata = "";
+                                var jsondata= {};
+                                var arrayJsondata = new Array();
+                                var cost_sum = 0.0;
+
+                                $($check_boxes).each(function(){
+                                    console.log($(this).val());
+                                    var item_content=$(this).parent().parent().children().find("input[name='item_content']").val();
+                                    var cost=parseFloat($(this).parent().parent().children().find("input[name='cost']").val());
+                                    var comments=$(this).parent().parent().children().find("input[name='comments']").val();
+                                    var proj_code=$(this).parent().parent().children().find("select[name='proj_code']").val();
+                                    var item_title=$(this).parent().parent().children().find("select[name='sub_item']").val();
+                                    var report_time=$(this).parent().parent().children().find("input[name='report_time']").val();
+                                    var no=$(this).parent().parent().children()[0].innerHTML;
+                                    console.log(report_time);
+                                    vdata=vdata+"####"+no+"="+$(this).val()+"="+item_content+"="+cost+"="+comments+"="+proj_code+"="+item_title+"="+report_time;
+                                    jsondata={"no": no, "item_content": item_content, "cost": cost, "comments": comments, "proj_code": proj_code, "item_title": item_title, "report_time": report_time, "submitter": "hanxingyu" }
+                                    arrayJsondata.push(jsondata);
+
+                                    item_content_array.push(item_content);
+                                    item_cost.push(cost);
+                                    item_all.push(item_content, cost, comments, proj_code, item_title, report_time);
+                                    //cost_sum = cost_sum + cost;
+                                    
+                                })
+                                //console.log("vadata is:"+vdata);
+                                console.log("cookie username is:"+$.cookie("username"));
+                                console.log("arrayJsondata is:"+JSON.stringify(arrayJsondata));
+
+                                var selected_proj_code=$("#selected_proj_code").val();
+                                console.log("系统名称："+selected_proj_code);
+                                if(selected_proj_code=="请选择系统名称"){
+                                    toastr.info("系统名称不能为空!");
+                                    $("#selected_proj_code").focus();
+                                    return false;
+                                }
+
+                                var item_type1=$("#item_type1").val();
+                                console.log("日报分类："+item_type1);
+
+                                if(item_type1=="请选择分类"){
+                                    toastr.info("日报分类不能为空!");
+                                    $("#item_type1").focus();
+                                    return false;
+                                }
+
+                                var check_time1 = $("#check_time").val().toString();
+                                var date  = new Date();
+                                var now = date.getFullYear()+'-'+ (date.getMonth()+1)+'-'+date.getDate();
+                                console.log(check_time1);
+                                console.log(now);
+
+                    //            if(check_time1>now){
+                    //                toastr.info("不能提交未来日报");
+                    //                return false;
+                    //            }
+
+                                var has_empty=0;
+                                item_content_array.forEach(function (item, index, array) {
+                                    console.log(item, index);
+                                    var regu = "^[ ]+$";
+                                    var re = new RegExp(regu);
+                                    if (item.length<6) has_empty=1;
+                                    if (re.test(item)) has_empty=1;
+                                });
+
+                                if (has_empty==1) {
+                                    toastr.info("请输入日报工作内容(大于5个字)！");
+                                    $("#item_content").focus();
+                                    return false;
+                                }
+                                console.log("item_all:"+item_all);
+
+                                var cost_sum = 0.0;
+                                item_cost.forEach(function (item, index, array) {
+                                    console.log("cost:", item, index);
+                                    cost_sum = cost_sum + item;
+                                });
+
+                                console.log("cost_sum:"+cost_sum);
+                                console.log(cost_sum);
+                                console.log(item_content_array);
+                                //if (cost_sum<4||cost_sum>12) {
+                                //    toastr.info("工时合计应大于4小时，小于12小时！");
+                                //    return false;
+                                //}
+
+                                //dialogItself.close();
+                                $.post("./daily_report_dialog_do.jsp", {
+                                    data : vdata,
+                                    arrayjsondata: JSON.stringify(arrayJsondata),
+                                    submitter: $.cookie("username"),
+                                    check_time: $("#check_time").val(),
+                                }, function (data, textStatus) {
+                                    if (data.trim() != "") {                                      
+                                        toastr.info("【" + proj_name + "】日报已经提交！" + data.trim());
+                                        dialogItself.close();
+                                        location.reload();
+                                    }
+                                });
+                            }
+                        }
+                    ]
+                });
+            });
+
+            $('#maintable tbody').on('click',"#update_btn" ,function(){
+                var tno = $(this).parent().parent().parent().children()[0].innerHTML.trim();
+                var version = $(this).parent().parent().parent().children()[3].innerHTML.trim();
+                var proj_name = $(this).parent().parent().parent().children()[2].innerText.trim();
+                var projCode = $(this).parent().parent().parent().children().eq(2).children().eq(0).val();
+                var proj_code = $(this).parent().parent().parent().children()[1].innerText.trim();
+                var item_title = $(this).parent().parent().parent().children()[4].innerText.trim();
+                
+                BootstrapDialog.show({
+                    title: '日报更新【' + version +"】",
+                    message: $('<div></div>').load('./report_update_dialog.jsp?no=' + tno + '&proj_code=' + projCode + '&item_title=' + item_title),
+                    draggable: true,
+                    type: BootstrapDialog.TYPE_PRIMARY, // <-- Default value is BootstrapDialog.TYPE_PRIMARY
+                    size: BootstrapDialog.SIZE_NORMAL,
+                    buttons: [
+                        {
+                            label: '关闭',
+                            action: function (dialogItself) {
+                                dialogItself.close();
+                            }
+                        },
+                        {
+                            label: '提交',
+                            icon: 'glyphicon glyphicon-send',
+                            cssClass: 'btn-primary',
+                            action: function (dialogItself) {
+
+                                var d_item_content=$("#d_item_content").val();
+                                var d_cost=$("#d_cost").val();
+                                var now_time=show_today();
+
+
+                                var check_time1 = $("#d_report_time").val().toString();
+                               
+                                var date  = new Date();
+                                var now = date .getFullYear()+'-'+ (date.getMonth()+1)+'-'+date .getDate();
+                               
+
+                                if(check_time1>now){
+                                    toastr.info("不能提交未来日报");
+                                    return false;
+                                }
+                                //dialogItself.close();
+                               if(d_cost<0.5||d_cost>12){
+                                   return false;
+                               }
+
+                               if(d_item_content.length<6){
+                                   toastr.info("日报字数太少，小于6个！");
+                                   return false;
+                               }
+                               
+                                $.post("./report_update_dialog_do.jsp", {
+                                      proj_code: $("#d_proj_code").val().split(',')[0],
+                                      report_time: $("#d_report_time").val(),
+                                      item_no: $("#sub_item1").val(),
+                                      content: $("#d_item_content").val(),
+                                      cost: $("#d_cost").val(),
+                                      insert_time : now_time,
+                                      no: tno
+                                }, function (data, textStatus) {
+                                      if (data.trim() != "") {
+                                          toastr.info("【" + proj_name + "】日报内容已经更新！" + data.trim());
+                                          dialogItself.close();
+                                          location.reload();
+                                    }
+                                });
+                            }
+                        }
+                    ]
+                });
+            });
+
+            $('#maintable tbody').on('click',"#del_btn" ,function(){
+                var row = $(this).parent().parent().parent();
+                var issue = $(this).parent().parent().parent().children()[3].innerHTML.trim();
+                var proj_name = $(this).parent().parent().parent().children()[2].innerHTML.trim();
+                var content = $(this).parent().parent().parent().children()[5].innerHTML.trim();
+                var tno = $(this).parent().parent().parent().children()[0].innerHTML.trim();
+                console.log(tno);
+
+                BootstrapDialog.confirm({
+                    title: '删除确认',
+                    message: '确认删除【' + content.trim() + '】日报记录?',
+                    type: BootstrapDialog.TYPE_DANGER, // <-- Default value is BootstrapDialog.TYPE_PRIMARY
+                    size: BootstrapDialog.SIZE_SMALL,
+                    closable: true, // <-- Default value is false
+                    draggable: true, // <-- Default value is false
+                    btnCancelLabel: '取消', // <-- Default value is 'Cancel',
+                    btnOKLabel: '删除', // <-- Default value is 'OK',
+                    btnOKClass: 'btn-danger', // <-- If you didn't specify it, dialog type will be used,
+                    callback: function (result) {
+                        // result will be true if button was click, while it will be false if users close the dialog directly.
+                        if (result) {
+                            $.get("./report_delete_do.jsp", {
+                                no: tno
+                            }, function (data, textStatus) {
+                                if (data.trim() == "success") {
+                                    row.remove();
+                                    toastr.success("删除成功！");
+                                    location.reload();
+                           }
+                                else {
+                                    toastr.error("删除失败！" + data.trim());
+                                }
+                            });
+                            //table.ajax.reload();
+                            //window.location.reload();
+                        } else {
+                            //dialogItself.close();
+                        }
+                    }
+                });
+            })
+
+
+            $("[name='detail_report']").click(function () {
+                var proj_code = $(this).parent().parent().children()[1].innerHTML;
+                var proj_name = $(this).parent().parent().children()[2].innerHTML;
+                var check_date = $(this).parent().parent().children()[3].innerHTML;
+                console.log('./detail_report.jsp?proj_code=' + proj_code + '&check_date=' + check_date);
+                BootstrapDialog.show({
+                    title: '日报报告【' + proj_name + '】',
+                    message: $('<div></div>').load('./detail_report.jsp?proj_code=' + proj_code+'&check_date='+check_date),
+                    type: BootstrapDialog.TYPE_INFO, // <-- Default value is BootstrapDialog.TYPE_PRIMARY
+                    size: BootstrapDialog.SIZE_WIDE,
+                    closable: false,
+                    buttons: [
+                        {
+                            label: '关闭',
+                            action: function (dialogItself) {
+                                dialogItself.close();
+                            }
+                        }]
+                });
+            });
+
+            function show_today(){
+                var myDate=new Date();
+                year=myDate.getFullYear().toString();
+                month=(myDate.getMonth()+1).toString();
+                day=myDate.getDate().toString();
+                hour=myDate.getHours().toString();
+                minute=myDate.getMinutes().toString();
+                var today=year+'-'+month+'-'+day+' '+hour+':'+minute;
+                return today;
+            }
+
+            $("#show_today").click(function(){
+                $("#show_today").val("显示今天");
+                $("#search_btn").val("");
+           })
+
+
+           $("#search_btn").click(function(){
+                $("#show_today").val("");
+                $("#search_btn").val("搜索");
+           })
+        })
+    </script>
+    <style>
+         .modal-dialog {
+            width: 90%;
+        }
+    </style>
+    <style>
+        div.container {
+            width: 98%;
+        }
+
+        .input[type="text"] {
+            width: 150px;
+            display: block;
+            margin-bottom: 10px;
+            background-color: yellow;
+            font-family: Verdana, Arial;
+        }
+
+        .td {
+            height: 20px;
+        }
+
+        .modal .modal-body {
+            max-height: 90%;
+            overflow-y: auto;
+        }
+
+        .btn-custom-color {
+            background-color: #ff6b6b;
+            border-color: #ff6b6b;
+            color: #ffffff;
+        }
+
+        .btn-custom-color:hover {
+            background-color: #ee5253;
+            border-color: #ee5253;
+            color: #ffffff;
+        }
+    </style>
+</head>
+
+<body>
+
+<br>
+
+<div class="container" id="main_div1">
+    <section>
+        <form action="#" method="post" class="form-inline">
+             
+                <label for="proj_code_search"><i class="fa fa-book" aria-hidden="true"></i>&nbsp;我的日报</label>
+                <select class="selectpicker" data-width="fit" class="form-control input-sm" 
+                        required="required" id="proj_code_search" style="height: 15px; width: 160px;" readonly>
+                    <option value="%" selected="selected">所有分类</option>
+                    
+                    <option placeholder="xxx"
+                            
+                            value="01-需求管理/咨询">01-需求管理/咨询
+
+                    </option>
+                    
+                    <option placeholder="xxx"
+                            
+                            value="02-架构/系统设计">02-架构/系统设计
+
+                    </option>
+                    
+                    <option placeholder="xxx"
+                            
+                            value="03-开发及单元测试">03-开发及单元测试
+
+                    </option>
+                    
+                    <option placeholder="xxx"
+                            
+                            value="04-系统功能测试">04-系统功能测试
+
+                    </option>
+                    
+                    <option placeholder="xxx"
+                            
+                            value="05-集成测试">05-集成测试
+
+                    </option>
+                    
+                    <option placeholder="xxx"
+                            
+                            value="06-用户测试">06-用户测试
+
+                    </option>
+                    
+                    <option placeholder="xxx"
+                            
+                            value="07-发布支持">07-发布支持
+
+                    </option>
+                    
+                    <option placeholder="xxx"
+                            
+                            value="08-项目管理">08-项目管理
+
+                    </option>
+                    
+                    <option placeholder="xxx"
+                            
+                            value="09-客服">09-客服
+
+                    </option>
+                    
+                    <option placeholder="xxx"
+                            
+                            value="10-应用运维">10-应用运维
+
+                    </option>
+                    
+                    <option placeholder="xxx"
+                            
+                            value="99-部门和公司管理">99-部门和公司管理
+
+                    </option>
+                    
+                </select>
+
+                <label for="start_time">开始时间：</label><input style="height: 18px; width: 90px;" class="form-control input-sm" name="start_time" id="start_time">
+                <label for="end_time">结束时间：</label><input style="height: 18px; width: 90px;" class="form-control input-sm" name="end_time" id="end_time">
+                <div class="btn-group btn-group-sm" >
+
+                <button class="btn btn-sm btn-primary" name="search"  id="search_btn"  type="submit"><i class="fa fa-search" aria-hidden="true"></i>搜索
+                </button>
+
+                <button type="button" class="btn btn-sm btn-warning" id="add_btn"><i
+                        class="icon-plus icon-spin"></i><i class="fa fa-plus" aria-hidden="true"></i>&nbsp;日报
+                </button>
+
+                <button type="submit" name="show"  class="btn btn-sm btn-info" id="show_today" ><i
+                    class="icon-refresh icon-spin"></i><i class="fa fa-desktop" aria-hidden="true"></i>&nbsp;显示当日
+                </button>
+                <button type="button" onclick="javascript:window.location.href='../daily_report/calendar/index.jsp'" class="btn btn-sm btn-success" id="calendar_view" ><i class="icon-refresh icon-spin"></i><i class="fa fa-calendar" aria-hidden="true"></i>&nbsp;日历视图</a>
+                </button>
+                <button type="button" onclick="javascript:window.location.href='../daily_report/my_report.jsp'" class="btn btn-sm btn-primary" id="list_view" ><i class="icon-refresh icon-spin"></i><i class="fa fa-list" aria-hidden="true"></i>&nbsp;列表视图
+                </button>
+                <button type="button" class="btn btn-sm btn-default" onclick="location.reload();"><i
+                    class="icon-refresh icon-spin"></i><i class="fa fa-refresh" aria-hidden="true"></i>&nbsp;刷新
+                </button>
+                
+                </div>
+            
+        </form>
+        <hr>
+        <div class="progress progress-striped" style="background-color: gray;">
+
+        
+                <div class="progress-bar  progress-bar-primary" role="progressbar"
+                aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"
+                style="width: 2%;"%>D1
+                
+               <span class="sr-only">40% 完成</span>
+                </div>
+                
+                <div class="progress-bar  progress-bar-info" role="progressbar"
+                aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"
+                style="width: 2%;"%>D7
+                
+               <span class="sr-only">40% 完成</span>
+                </div>
+                
+                <div class="progress-bar  progress-bar-info" role="progressbar"
+                aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"
+                style="width: 2%;"%>D6
+                
+               <span class="sr-only">40% 完成</span>
+                </div>
+                
+                <div class="progress-bar  progress-bar-success" role="progressbar"
+                aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"
+                style="width: 14%;"%>D5
+                (8hrs:100%)
+               <span class="sr-only">40% 完成</span>
+                </div>
+                
+                <div class="progress-bar  progress-bar-danger" role="progressbar"
+                aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"
+                style="width: 14%;"%>D4
+                (8hrs:100%)
+               <span class="sr-only">40% 完成</span>
+                </div>
+                
+                <div class="progress-bar  progress-bar-info" role="progressbar"
+                aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"
+                style="width: 14%;"%>D3
+                (8hrs:100%)
+               <span class="sr-only">40% 完成</span>
+                </div>
+                
+                <div class="progress-bar  progress-bar-warning" role="progressbar"
+                aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"
+                style="width: 14%;"%>D2
+                (8hrs:100%)
+               <span class="sr-only">40% 完成</span>
+                </div>
+                
+
+        </div>
+        <hr>
+        <form name="mainform" id="mainform" method="post">
+            <table id="maintable" class="display compact" cellspacing="1" width="100%" style="table-layout:fixed">
+                <thead>
+                <tr align="left">
+                    
+                    <th nowrap width="20">序号</th>
+                    <th nowrap width="1px" style="width: 1px;"></th>
+                    <th nowrap width="60">项目名称</th>
+                    <th nowrap width="70">日报分类</th>
+                    <th nowrap width="70">分类子项</th>
+                    <th nowrap width="200">日报内容</th>
+                    <th nowrap width="30">用时(H)</th>
+                    <th nowrap width="40">日报日期</th>
+                    <th nowrap width="40">提交时间</th>
+                    <th nowrap width="40">提交人</th>
+                    <th nowrap width="60">审核状态(人)</th>
+                    
+
+                    <th nowrap width="80">更新&删除</th>
+                    
+                </tr>
+                </thead>
+                <tbody>
+                
+                <tr >
+                    <td nowarp>6415
+                    </td>
+                    <td nowarp></td>
+                    <td nowarp>
+                        <input type=hidden class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td  
+                    nowarp>
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp>A-开发实施</td>
+                    <td nowarp>[artf59914] 清结算支持场外-限流与日志优化：关闭下不注册任何bean</td>
+                    <td nowarp>4.0</td>
+                    <td nowarp>2026-03-27</td>
+                    <td nowarp>03/27 18:10</td>
+                    <td nowarp>韩兴宇</td>
+                    <td nowarp>待审核</td>
+
+                        
+                    <td nowarp>
+
+                    <div class="btn-group btn-group-xs" >
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr>
+                
+                <tr >
+                    <td nowarp>6414
+                    </td>
+                    <td nowarp></td>
+                    <td nowarp>
+                        <input type=hidden class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td  
+                    nowarp>
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp>A-开发实施</td>
+                    <td nowarp>[artf59914] 清结算支持场外-1000条账单sql优化协助支持</td>
+                    <td nowarp>4.0</td>
+                    <td nowarp>2026-03-27</td>
+                    <td nowarp>03/27 18:10</td>
+                    <td nowarp>韩兴宇</td>
+                    <td nowarp>待审核</td>
+
+                        
+                    <td nowarp>
+
+                    <div class="btn-group btn-group-xs" >
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr>
+                
+                <tr >
+                    <td nowarp>6303
+                    </td>
+                    <td nowarp></td>
+                    <td nowarp>
+                        <input type=hidden class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td  
+                    nowarp>
+                        04-系统功能测试
+                    </td>
+                    <td nowarp>B-测试用例审阅</td>
+                    <td nowarp>[artf59914] 清结算支持场外-测试demo评审-第一次评审会议</td>
+                    <td nowarp>3.0</td>
+                    <td nowarp>2026-03-26</td>
+                    <td nowarp>03/26 09:53</td>
+                    <td nowarp>韩兴宇</td>
+                    <td nowarp>待审核</td>
+
+                        
+                    <td nowarp>
+
+                    <div class="btn-group btn-group-xs" >
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr>
+                
+                <tr >
+                    <td nowarp>6302
+                    </td>
+                    <td nowarp></td>
+                    <td nowarp>
+                        <input type=hidden class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td  
+                    nowarp>
+                        02-架构/系统设计
+                    </td>
+                    <td nowarp>A-架构设计及文档编写</td>
+                    <td nowarp>[artf59914] 清结算支持场外-pangu配置轻量热更新设计</td>
+                    <td nowarp>5.0</td>
+                    <td nowarp>2026-03-26</td>
+                    <td nowarp>03/26 09:51</td>
+                    <td nowarp>韩兴宇</td>
+                    <td nowarp>待审核</td>
+
+                        
+                    <td nowarp>
+
+                    <div class="btn-group btn-group-xs" >
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr>
+                
+                <tr style='background-color:lightgreen'>
+                    <td nowarp>6260
+                    </td>
+                    <td nowarp></td>
+                    <td nowarp>
+                        <input type=hidden class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style='background-color:lightgreen' 
+                    nowarp>
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp>A-开发实施</td>
+                    <td nowarp>[artf59914] 清结算支持场外-代码评审，demo演示，- 第四次cr</td>
+                    <td nowarp>4.0</td>
+                    <td nowarp>2026-03-25</td>
+                    <td nowarp>03/25 10:49</td>
+                    <td nowarp>韩兴宇</td>
+                    <td nowarp>通过(guoleijie)</td>
+
+                        
+                    <td nowarp>
+
+                    <div class="btn-group btn-group-xs" >
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr>
+                
+                <tr style='background-color:lightgreen'>
+                    <td nowarp>6259
+                    </td>
+                    <td nowarp></td>
+                    <td nowarp>
+                        <input type=hidden class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style='background-color:lightgreen' 
+                    nowarp>
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp>A-开发实施</td>
+                    <td nowarp>[artf59914] 清结算支持场外-pangu接口日志db入库优化</td>
+                    <td nowarp>4.0</td>
+                    <td nowarp>2026-03-25</td>
+                    <td nowarp>03/25 10:49</td>
+                    <td nowarp>韩兴宇</td>
+                    <td nowarp>通过(guoleijie)</td>
+
+                        
+                    <td nowarp>
+
+                    <div class="btn-group btn-group-xs" >
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr>
+                
+                <tr style='background-color:lightgreen'>
+                    <td nowarp>6254
+                    </td>
+                    <td nowarp></td>
+                    <td nowarp>
+                        <input type=hidden class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style='background-color:lightgreen' 
+                    nowarp>
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp>A-开发实施</td>
+                    <td nowarp>[artf59914] 清结算支持场外-pangu限流和日志文档梳理</td>
+                    <td nowarp>2.0</td>
+                    <td nowarp>2026-03-24</td>
+                    <td nowarp>03/24 21:09</td>
+                    <td nowarp>韩兴宇</td>
+                    <td nowarp>通过(guoleijie)</td>
+
+                        
+                    <td nowarp>
+
+                    <div class="btn-group btn-group-xs" >
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr>
+                
+                <tr style='background-color:lightgreen'>
+                    <td nowarp>6253
+                    </td>
+                    <td nowarp></td>
+                    <td nowarp>
+                        <input type=hidden class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style='background-color:lightgreen' 
+                    nowarp>
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp>A-开发实施</td>
+                    <td nowarp>[artf59914] 清结算支持场外-上链任务流改造开发</td>
+                    <td nowarp>3.0</td>
+                    <td nowarp>2026-03-24</td>
+                    <td nowarp>03/24 21:09</td>
+                    <td nowarp>韩兴宇</td>
+                    <td nowarp>通过(guoleijie)</td>
+
+                        
+                    <td nowarp>
+
+                    <div class="btn-group btn-group-xs" >
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr>
+                
+                <tr style='background-color:lightgreen'>
+                    <td nowarp>6252
+                    </td>
+                    <td nowarp></td>
+                    <td nowarp>
+                        <input type=hidden class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style='background-color:lightgreen' 
+                    nowarp>
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp>A-开发实施</td>
+                    <td nowarp>[artf59914] 清结算支持场外-上链任务流改造设计</td>
+                    <td nowarp>3.0</td>
+                    <td nowarp>2026-03-24</td>
+                    <td nowarp>03/24 21:09</td>
+                    <td nowarp>韩兴宇</td>
+                    <td nowarp>通过(guoleijie)</td>
+
+                        
+                    <td nowarp>
+
+                    <div class="btn-group btn-group-xs" >
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr>
+                
+                <tr style='background-color:lightgreen'>
+                    <td nowarp>6163
+                    </td>
+                    <td nowarp></td>
+                    <td nowarp>
+                        <input type=hidden class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style='background-color:lightgreen' 
+                    nowarp>
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp>A-开发实施</td>
+                    <td nowarp>[artf59914] 清结算支持场外-日志优化-取消starter，合并到pangu</td>
+                    <td nowarp>2.0</td>
+                    <td nowarp>2026-03-23</td>
+                    <td nowarp>03/23 13:49</td>
+                    <td nowarp>韩兴宇</td>
+                    <td nowarp>通过(guoleijie)</td>
+
+                        
+                    <td nowarp>
+
+                    <div class="btn-group btn-group-xs" >
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr>
+                
+                <tr style='background-color:lightgreen'>
+                    <td nowarp>6162
+                    </td>
+                    <td nowarp></td>
+                    <td nowarp>
+                        <input type=hidden class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style='background-color:lightgreen' 
+                    nowarp>
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp>A-开发实施</td>
+                    <td nowarp>[artf59914] 清结算支持场外-业务与上链完全解绑优化设计</td>
+                    <td nowarp>2.0</td>
+                    <td nowarp>2026-03-23</td>
+                    <td nowarp>03/23 13:48</td>
+                    <td nowarp>韩兴宇</td>
+                    <td nowarp>通过(guoleijie)</td>
+
+                        
+                    <td nowarp>
+
+                    <div class="btn-group btn-group-xs" >
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr>
+                
+                <tr style='background-color:lightgreen'>
+                    <td nowarp>6161
+                    </td>
+                    <td nowarp></td>
+                    <td nowarp>
+                        <input type=hidden class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style='background-color:lightgreen' 
+                    nowarp>
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp>A-开发实施</td>
+                    <td nowarp>[artf59914] 清结算支持场外-清结算文档、代码 code review</td>
+                    <td nowarp>4.0</td>
+                    <td nowarp>2026-03-23</td>
+                    <td nowarp>03/23 13:47</td>
+                    <td nowarp>韩兴宇</td>
+                    <td nowarp>通过(guoleijie)</td>
+
+                        
+                    <td nowarp>
+
+                    <div class="btn-group btn-group-xs" >
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr>
+                
+                <tr style='background-color:lightgreen'>
+                    <td nowarp>6109
+                    </td>
+                    <td nowarp></td>
+                    <td nowarp>
+                        <input type=hidden class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style='background-color:lightgreen' 
+                    nowarp>
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp>A-开发实施</td>
+                    <td nowarp>[artf59914] 清结算支持场外-接口日志starter接入及优化</td>
+                    <td nowarp>3.0</td>
+                    <td nowarp>2026-03-20</td>
+                    <td nowarp>03/20 15:39</td>
+                    <td nowarp>韩兴宇</td>
+                    <td nowarp>通过(guoleijie)</td>
+
+                        
+                    <td nowarp>
+
+                    <div class="btn-group btn-group-xs" >
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr>
+                
+                <tr style='background-color:lightgreen'>
+                    <td nowarp>6108
+                    </td>
+                    <td nowarp></td>
+                    <td nowarp>
+                        <input type=hidden class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style='background-color:lightgreen' 
+                    nowarp>
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp>A-开发实施</td>
+                    <td nowarp>[artf59914] 清结算支持场外-限流增加全局开关</td>
+                    <td nowarp>2.0</td>
+                    <td nowarp>2026-03-20</td>
+                    <td nowarp>03/20 15:39</td>
+                    <td nowarp>韩兴宇</td>
+                    <td nowarp>通过(guoleijie)</td>
+
+                        
+                    <td nowarp>
+
+                    <div class="btn-group btn-group-xs" >
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr>
+                
+                <tr style='background-color:lightgreen'>
+                    <td nowarp>6107
+                    </td>
+                    <td nowarp></td>
+                    <td nowarp>
+                        <input type=hidden class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style='background-color:lightgreen' 
+                    nowarp>
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp>A-开发实施</td>
+                    <td nowarp>[artf59914] 清结算支持场外-账单批量上链消息优化-取消账单批量消息</td>
+                    <td nowarp>3.0</td>
+                    <td nowarp>2026-03-20</td>
+                    <td nowarp>03/20 15:39</td>
+                    <td nowarp>韩兴宇</td>
+                    <td nowarp>通过(guoleijie)</td>
+
+                        
+                    <td nowarp>
+
+                    <div class="btn-group btn-group-xs" >
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr>
+                
+                <tr style='background-color:lightgreen'>
+                    <td nowarp>6045
+                    </td>
+                    <td nowarp></td>
+                    <td nowarp>
+                        <input type=hidden class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style='background-color:lightgreen' 
+                    nowarp>
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp>C-单元测试</td>
+                    <td nowarp>[artf59914] 清结算支持场外-日志优化-通用事件日志starter接入测试</td>
+                    <td nowarp>3.0</td>
+                    <td nowarp>2026-03-19</td>
+                    <td nowarp>03/19 09:21</td>
+                    <td nowarp>韩兴宇</td>
+                    <td nowarp>通过(guoleijie)</td>
+
+                        
+                    <td nowarp>
+
+                    <div class="btn-group btn-group-xs" >
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr>
+                
+                <tr style='background-color:lightgreen'>
+                    <td nowarp>6044
+                    </td>
+                    <td nowarp></td>
+                    <td nowarp>
+                        <input type=hidden class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style='background-color:lightgreen' 
+                    nowarp>
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp>A-开发实施</td>
+                    <td nowarp>[artf59914] 清结算支持场外-日志优化-通用事件日志starter开发</td>
+                    <td nowarp>3.0</td>
+                    <td nowarp>2026-03-19</td>
+                    <td nowarp>03/19 09:21</td>
+                    <td nowarp>韩兴宇</td>
+                    <td nowarp>通过(guoleijie)</td>
+
+                        
+                    <td nowarp>
+
+                    <div class="btn-group btn-group-xs" >
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr>
+                
+                <tr style='background-color:lightgreen'>
+                    <td nowarp>6043
+                    </td>
+                    <td nowarp></td>
+                    <td nowarp>
+                        <input type=hidden class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style='background-color:lightgreen' 
+                    nowarp>
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp>A-开发实施</td>
+                    <td nowarp>[artf59914] 清结算支持场外-测试案例评审</td>
+                    <td nowarp>2.0</td>
+                    <td nowarp>2026-03-19</td>
+                    <td nowarp>03/19 09:21</td>
+                    <td nowarp>韩兴宇</td>
+                    <td nowarp>通过(guoleijie)</td>
+
+                        
+                    <td nowarp>
+
+                    <div class="btn-group btn-group-xs" >
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr>
+                
+                <tr style='background-color:lightgreen'>
+                    <td nowarp>6042
+                    </td>
+                    <td nowarp></td>
+                    <td nowarp>
+                        <input type=hidden class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style='background-color:lightgreen' 
+                    nowarp>
+                        02-架构/系统设计
+                    </td>
+                    <td nowarp>A-架构设计及文档编写</td>
+                    <td nowarp>[artf59914] pangu前置接口日志设计方案优化-日志使用applicationEventListner做异步</td>
+                    <td nowarp>2.0</td>
+                    <td nowarp>2026-03-18</td>
+                    <td nowarp>03/19 09:19</td>
+                    <td nowarp>韩兴宇</td>
+                    <td nowarp>通过(guoleijie)</td>
+
+                        
+                    <td nowarp>
+
+                    <div class="btn-group btn-group-xs" >
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr>
+                
+                <tr style='background-color:lightgreen'>
+                    <td nowarp>6041
+                    </td>
+                    <td nowarp></td>
+                    <td nowarp>
+                        <input type=hidden class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style='background-color:lightgreen' 
+                    nowarp>
+                        02-架构/系统设计
+                    </td>
+                    <td nowarp>A-架构设计及文档编写</td>
+                    <td nowarp>[artf59914] pangu前置接口日志设计方案优化-日志从aop转为interceptor</td>
+                    <td nowarp>2.0</td>
+                    <td nowarp>2026-03-18</td>
+                    <td nowarp>03/19 09:19</td>
+                    <td nowarp>韩兴宇</td>
+                    <td nowarp>通过(guoleijie)</td>
+
+                        
+                    <td nowarp>
+
+                    <div class="btn-group btn-group-xs" >
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr>
+                
+                <tr style='background-color:lightgreen'>
+                    <td nowarp>6040
+                    </td>
+                    <td nowarp></td>
+                    <td nowarp>
+                        <input type=hidden class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style='background-color:lightgreen' 
+                    nowarp>
+                        02-架构/系统设计
+                    </td>
+                    <td nowarp>A-架构设计及文档编写</td>
+                    <td nowarp>[artf59914] pangu前置限流设计方案优化-增加tokenrate， buckettag， 按读写分桶</td>
+                    <td nowarp>4.0</td>
+                    <td nowarp>2026-03-18</td>
+                    <td nowarp>03/19 09:19</td>
+                    <td nowarp>韩兴宇</td>
+                    <td nowarp>通过(guoleijie)</td>
+
+                        
+                    <td nowarp>
+
+                    <div class="btn-group btn-group-xs" >
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr>
+                
+                <tr style='background-color:lightgreen'>
+                    <td nowarp>5985
+                    </td>
+                    <td nowarp></td>
+                    <td nowarp>
+                        <input type=hidden class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style='background-color:lightgreen' 
+                    nowarp>
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp>A-开发实施</td>
+                    <td nowarp>[artf59914] 清结算支持场外-pangu机构限流开发</td>
+                    <td nowarp>5.0</td>
+                    <td nowarp>2026-03-17</td>
+                    <td nowarp>03/17 18:02</td>
+                    <td nowarp>韩兴宇</td>
+                    <td nowarp>通过(guoleijie)</td>
+
+                        
+                    <td nowarp>
+
+                    <div class="btn-group btn-group-xs" >
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr>
+                
+                <tr style='background-color:lightgreen'>
+                    <td nowarp>5984
+                    </td>
+                    <td nowarp></td>
+                    <td nowarp>
+                        <input type=hidden class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style='background-color:lightgreen' 
+                    nowarp>
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp>A-开发实施</td>
+                    <td nowarp>[artf59914] 清结算支持场外-pangu机构限流设计</td>
+                    <td nowarp>3.0</td>
+                    <td nowarp>2026-03-17</td>
+                    <td nowarp>03/17 18:02</td>
+                    <td nowarp>韩兴宇</td>
+                    <td nowarp>通过(guoleijie)</td>
+
+                        
+                    <td nowarp>
+
+                    <div class="btn-group btn-group-xs" >
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr>
+                
+                <tr style='background-color:lightgreen'>
+                    <td nowarp>5946
+                    </td>
+                    <td nowarp></td>
+                    <td nowarp>
+                        <input type=hidden class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style='background-color:lightgreen' 
+                    nowarp>
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp>A-开发实施</td>
+                    <td nowarp>[artf59914] 清结算支持场外-清结算网关黑名单测试</td>
+                    <td nowarp>2.0</td>
+                    <td nowarp>2026-03-16</td>
+                    <td nowarp>03/16 18:08</td>
+                    <td nowarp>韩兴宇</td>
+                    <td nowarp>通过(guoleijie)</td>
+
+                        
+                    <td nowarp>
+
+                    <div class="btn-group btn-group-xs" >
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr>
+                
+                <tr style='background-color:lightgreen'>
+                    <td nowarp>5945
+                    </td>
+                    <td nowarp></td>
+                    <td nowarp>
+                        <input type=hidden class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style='background-color:lightgreen' 
+                    nowarp>
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp>A-开发实施</td>
+                    <td nowarp>[artf59914] 清结算支持场外-清结算网关黑名单开发</td>
+                    <td nowarp>3.0</td>
+                    <td nowarp>2026-03-16</td>
+                    <td nowarp>03/16 18:08</td>
+                    <td nowarp>韩兴宇</td>
+                    <td nowarp>通过(guoleijie)</td>
+
+                        
+                    <td nowarp>
+
+                    <div class="btn-group btn-group-xs" >
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr>
+                
+                <tr style='background-color:lightgreen'>
+                    <td nowarp>5944
+                    </td>
+                    <td nowarp></td>
+                    <td nowarp>
+                        <input type=hidden class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style='background-color:lightgreen' 
+                    nowarp>
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp>A-开发实施</td>
+                    <td nowarp>[artf59914] 清结算支持场外-shie代码评审</td>
+                    <td nowarp>1.0</td>
+                    <td nowarp>2026-03-16</td>
+                    <td nowarp>03/16 18:08</td>
+                    <td nowarp>韩兴宇</td>
+                    <td nowarp>通过(guoleijie)</td>
+
+                        
+                    <td nowarp>
+
+                    <div class="btn-group btn-group-xs" >
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr>
+                
+                <tr style='background-color:lightgreen'>
+                    <td nowarp>5943
+                    </td>
+                    <td nowarp></td>
+                    <td nowarp>
+                        <input type=hidden class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style='background-color:lightgreen' 
+                    nowarp>
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp>A-开发实施</td>
+                    <td nowarp>[artf59914] 清结算支持场外-pangu代码评审</td>
+                    <td nowarp>2.0</td>
+                    <td nowarp>2026-03-16</td>
+                    <td nowarp>03/16 18:08</td>
+                    <td nowarp>韩兴宇</td>
+                    <td nowarp>通过(guoleijie)</td>
+
+                        
+                    <td nowarp>
+
+                    <div class="btn-group btn-group-xs" >
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr>
+                
+                <tr style='background-color:lightgreen'>
+                    <td nowarp>5840
+                    </td>
+                    <td nowarp></td>
+                    <td nowarp>
+                        <input type=hidden class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style='background-color:lightgreen' 
+                    nowarp>
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp>A-开发实施</td>
+                    <td nowarp>[artf59914] 清结算支持场外-pangu-结算单状态上链请求支持附件上传</td>
+                    <td nowarp>5.0</td>
+                    <td nowarp>2026-03-13</td>
+                    <td nowarp>03/13 09:17</td>
+                    <td nowarp>韩兴宇</td>
+                    <td nowarp>通过(guoleijie)</td>
+
+                        
+                    <td nowarp>
+
+                    <div class="btn-group btn-group-xs" >
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr>
+                
+                <tr style='background-color:lightgreen'>
+                    <td nowarp>5839
+                    </td>
+                    <td nowarp></td>
+                    <td nowarp>
+                        <input type=hidden class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style='background-color:lightgreen' 
+                    nowarp>
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp>A-开发实施</td>
+                    <td nowarp>[artf59914] 清结算支持场外-shie收付款，数据权限校验支持父机构</td>
+                    <td nowarp>3.0</td>
+                    <td nowarp>2026-03-13</td>
+                    <td nowarp>03/13 09:17</td>
+                    <td nowarp>韩兴宇</td>
+                    <td nowarp>通过(guoleijie)</td>
+
+                        
+                    <td nowarp>
+
+                    <div class="btn-group btn-group-xs" >
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr>
+                
+                <tr style='background-color:lightgreen'>
+                    <td nowarp>5788
+                    </td>
+                    <td nowarp></td>
+                    <td nowarp>
+                        <input type=hidden class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style='background-color:lightgreen' 
+                    nowarp>
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp>A-开发实施</td>
+                    <td nowarp>[artf59914] 清结算支持场外-收付款及状态上链部分代码优化</td>
+                    <td nowarp>4.0</td>
+                    <td nowarp>2026-03-12</td>
+                    <td nowarp>03/12 08:58</td>
+                    <td nowarp>韩兴宇</td>
+                    <td nowarp>通过(guoleijie)</td>
+
+                        
+                    <td nowarp>
+
+                    <div class="btn-group btn-group-xs" >
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr>
+                
+                <tr style='background-color:lightgreen'>
+                    <td nowarp>5787
+                    </td>
+                    <td nowarp></td>
+                    <td nowarp>
+                        <input type=hidden class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style='background-color:lightgreen' 
+                    nowarp>
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp>A-开发实施</td>
+                    <td nowarp>[artf59914] 清结算支持场外-修改机构传参字段，其他接口也增加fromOrg</td>
+                    <td nowarp>2.5</td>
+                    <td nowarp>2026-03-12</td>
+                    <td nowarp>03/12 08:58</td>
+                    <td nowarp>韩兴宇</td>
+                    <td nowarp>通过(guoleijie)</td>
+
+                        
+                    <td nowarp>
+
+                    <div class="btn-group btn-group-xs" >
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr>
+                
+                <tr style='background-color:lightgreen'>
+                    <td nowarp>5786
+                    </td>
+                    <td nowarp></td>
+                    <td nowarp>
+                        <input type=hidden class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style='background-color:lightgreen' 
+                    nowarp>
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp>A-开发实施</td>
+                    <td nowarp>[artf59914] 清结算支持场外-收付款及状态上链部分code review</td>
+                    <td nowarp>1.5</td>
+                    <td nowarp>2026-03-12</td>
+                    <td nowarp>03/12 08:58</td>
+                    <td nowarp>韩兴宇</td>
+                    <td nowarp>通过(guoleijie)</td>
+
+                        
+                    <td nowarp>
+
+                    <div class="btn-group btn-group-xs" >
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr>
+                
+                <tr style='background-color:lightgreen'>
+                    <td nowarp>5731
+                    </td>
+                    <td nowarp></td>
+                    <td nowarp>
+                        <input type=hidden class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style='background-color:lightgreen' 
+                    nowarp>
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp>A-开发实施</td>
+                    <td nowarp>[artf59914] 清结算支持场外-综合查询-清结算查询-支持机构接入结算单查询自测</td>
+                    <td nowarp>4.0</td>
+                    <td nowarp>2026-03-11</td>
+                    <td nowarp>03/11 09:11</td>
+                    <td nowarp>韩兴宇</td>
+                    <td nowarp>通过(guoleijie)</td>
+
+                        
+                    <td nowarp>
+
+                    <div class="btn-group btn-group-xs" >
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr>
+                
+                <tr style='background-color:lightgreen'>
+                    <td nowarp>5730
+                    </td>
+                    <td nowarp></td>
+                    <td nowarp>
+                        <input type=hidden class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style='background-color:lightgreen' 
+                    nowarp>
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp>A-开发实施</td>
+                    <td nowarp>[artf59914] 清结算支持场外-综合查询-清结算查询-支持机构接入结算单查询设计</td>
+                    <td nowarp>4.0</td>
+                    <td nowarp>2026-03-11</td>
+                    <td nowarp>03/11 09:11</td>
+                    <td nowarp>韩兴宇</td>
+                    <td nowarp>通过(guoleijie)</td>
+
+                        
+                    <td nowarp>
+
+                    <div class="btn-group btn-group-xs" >
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr>
+                
+                <tr style='background-color:lightgreen'>
+                    <td nowarp>5512
+                    </td>
+                    <td nowarp></td>
+                    <td nowarp>
+                        <input type=hidden class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style='background-color:lightgreen' 
+                    nowarp>
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp>A-开发实施</td>
+                    <td nowarp>[artf59914] 清结算支持场外-pangu接入层收付款登记机构接入优化</td>
+                    <td nowarp>2.0</td>
+                    <td nowarp>2026-03-05</td>
+                    <td nowarp>03/11 09:07</td>
+                    <td nowarp>韩兴宇</td>
+                    <td nowarp>通过(guoleijie)</td>
+
+                        
+                    <td nowarp>
+
+                    <div class="btn-group btn-group-xs" >
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr>
+                
+                <tr style='background-color:lightgreen'>
+                    <td nowarp>5686
+                    </td>
+                    <td nowarp></td>
+                    <td nowarp>
+                        <input type=hidden class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style='background-color:lightgreen' 
+                    nowarp>
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp>A-开发实施</td>
+                    <td nowarp>[artf59914] 清结算支持场外-场内交易结算单账单批量上链开发自测</td>
+                    <td nowarp>3.0</td>
+                    <td nowarp>2026-03-10</td>
+                    <td nowarp>03/11 09:05</td>
+                    <td nowarp>韩兴宇</td>
+                    <td nowarp>通过(guoleijie)</td>
+
+                        
+                    <td nowarp>
+
+                    <div class="btn-group btn-group-xs" >
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr>
+                
+                <tr style='background-color:lightgreen'>
+                    <td nowarp>5688
+                    </td>
+                    <td nowarp></td>
+                    <td nowarp>
+                        <input type=hidden class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style='background-color:lightgreen' 
+                    nowarp>
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp>A-开发实施</td>
+                    <td nowarp>[artf59914] 清结算支持场外-收付款部分设计梳理，复盘</td>
+                    <td nowarp>2.0</td>
+                    <td nowarp>2026-03-10</td>
+                    <td nowarp>03/10 09:17</td>
+                    <td nowarp>韩兴宇</td>
+                    <td nowarp>通过(guoleijie)</td>
+
+                        
+                    <td nowarp>
+
+                    <div class="btn-group btn-group-xs" >
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr>
+                
+                <tr style='background-color:lightgreen'>
+                    <td nowarp>5685
+                    </td>
+                    <td nowarp></td>
+                    <td nowarp>
+                        <input type=hidden class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style='background-color:lightgreen' 
+                    nowarp>
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp>A-开发实施</td>
+                    <td nowarp>[artf59914] 清结算支持场外-场内交易结算单上链开发自测</td>
+                    <td nowarp>3.0</td>
+                    <td nowarp>2026-03-10</td>
+                    <td nowarp>03/10 09:16</td>
+                    <td nowarp>韩兴宇</td>
+                    <td nowarp>通过(guoleijie)</td>
+
+                        
+                    <td nowarp>
+
+                    <div class="btn-group btn-group-xs" >
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr>
+                
+                <tr style='background-color:lightgreen'>
+                    <td nowarp>5632
+                    </td>
+                    <td nowarp></td>
+                    <td nowarp>
+                        <input type=hidden class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style='background-color:lightgreen' 
+                    nowarp>
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp>A-开发实施</td>
+                    <td nowarp>[artf59914] 清结算支持场外-场外账单消息重试自测</td>
+                    <td nowarp>3.0</td>
+                    <td nowarp>2026-03-09</td>
+                    <td nowarp>03/09 16:41</td>
+                    <td nowarp>韩兴宇</td>
+                    <td nowarp>通过(guoleijie)</td>
+
+                        
+                    <td nowarp>
+
+                    <div class="btn-group btn-group-xs" >
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr>
+                
+                <tr style='background-color:lightgreen'>
+                    <td nowarp>5633
+                    </td>
+                    <td nowarp></td>
+                    <td nowarp>
+                        <input type=hidden class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style='background-color:lightgreen' 
+                    nowarp>
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp>A-开发实施</td>
+                    <td nowarp>[artf59914] 清结算支持场外-场外账单消息异常返回自测</td>
+                    <td nowarp>2.0</td>
+                    <td nowarp>2026-03-09</td>
+                    <td nowarp>03/09 16:41</td>
+                    <td nowarp>韩兴宇</td>
+                    <td nowarp>通过(guoleijie)</td>
+
+                        
+                    <td nowarp>
+
+                    <div class="btn-group btn-group-xs" >
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr>
+                
+                <tr style='background-color:lightgreen'>
+                    <td nowarp>5629
+                    </td>
+                    <td nowarp></td>
+                    <td nowarp>
+                        <input type=hidden class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style='background-color:lightgreen' 
+                    nowarp>
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp>A-开发实施</td>
+                    <td nowarp>[artf59914] 清结算支持场外-收付款登记场外账单正常流程自测</td>
+                    <td nowarp>3.0</td>
+                    <td nowarp>2026-03-09</td>
+                    <td nowarp>03/09 16:41</td>
+                    <td nowarp>韩兴宇</td>
+                    <td nowarp>通过(guoleijie)</td>
+
+                        
+                    <td nowarp>
+
+                    <div class="btn-group btn-group-xs" >
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr>
+                
+                <tr style='background-color:lightgreen'>
+                    <td nowarp>5628
+                    </td>
+                    <td nowarp></td>
+                    <td nowarp>
+                        <input type=hidden class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style='background-color:lightgreen' 
+                    nowarp>
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp>A-开发实施</td>
+                    <td nowarp>[artf59914] 清结算支持场外-场外结算单失算及收付款幂等及全局日志设计</td>
+                    <td nowarp>2.0</td>
+                    <td nowarp>2026-03-06</td>
+                    <td nowarp>03/07 16:54</td>
+                    <td nowarp>韩兴宇</td>
+                    <td nowarp>通过(guoleijie)</td>
+
+                        
+                    <td nowarp>
+
+                    <div class="btn-group btn-group-xs" >
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr>
+                
+                <tr style='background-color:lightgreen'>
+                    <td nowarp>5627
+                    </td>
+                    <td nowarp></td>
+                    <td nowarp>
+                        <input type=hidden class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style='background-color:lightgreen' 
+                    nowarp>
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp>A-开发实施</td>
+                    <td nowarp>[artf59914] 清结算支持场外-场外结算单失算及收付款代码评审</td>
+                    <td nowarp>2.0</td>
+                    <td nowarp>2026-03-06</td>
+                    <td nowarp>03/07 16:54</td>
+                    <td nowarp>韩兴宇</td>
+                    <td nowarp>通过(guoleijie)</td>
+
+                        
+                    <td nowarp>
+
+                    <div class="btn-group btn-group-xs" >
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr>
+                
+                <tr style='background-color:lightgreen'>
+                    <td nowarp>5574
+                    </td>
+                    <td nowarp></td>
+                    <td nowarp>
+                        <input type=hidden class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style='background-color:lightgreen' 
+                    nowarp>
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp>A-开发实施</td>
+                    <td nowarp>[artf59914] 清结算支持场外-场外结算单上链自测</td>
+                    <td nowarp>4.0</td>
+                    <td nowarp>2026-03-06</td>
+                    <td nowarp>03/06 09:10</td>
+                    <td nowarp>韩兴宇</td>
+                    <td nowarp>通过(guoleijie)</td>
+
+                        
+                    <td nowarp>
+
+                    <div class="btn-group btn-group-xs" >
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr>
+                
+                <tr style='background-color:lightgreen'>
+                    <td nowarp>5520
+                    </td>
+                    <td nowarp></td>
+                    <td nowarp>
+                        <input type=hidden class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style='background-color:lightgreen' 
+                    nowarp>
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp>A-开发实施</td>
+                    <td nowarp>[artf59914] 清结算支持场外-shie-场内收付款上链转异步任务改造</td>
+                    <td nowarp>4.0</td>
+                    <td nowarp>2026-03-05</td>
+                    <td nowarp>03/05 13:50</td>
+                    <td nowarp>韩兴宇</td>
+                    <td nowarp>通过(guoleijie)</td>
+
+                        
+                    <td nowarp>
+
+                    <div class="btn-group btn-group-xs" >
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr>
+                
+                <tr style='background-color:lightgreen'>
+                    <td nowarp>5513
+                    </td>
+                    <td nowarp></td>
+                    <td nowarp>
+                        <input type=hidden class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style='background-color:lightgreen' 
+                    nowarp>
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp>A-开发实施</td>
+                    <td nowarp>[artf59914] 清结算支持场外-pangu接入层收付款登记机构接入开发自测</td>
+                    <td nowarp>2.0</td>
+                    <td nowarp>2026-03-05</td>
+                    <td nowarp>03/05 09:23</td>
+                    <td nowarp>韩兴宇</td>
+                    <td nowarp>通过(guoleijie)</td>
+
+                        
+                    <td nowarp>
+
+                    <div class="btn-group btn-group-xs" >
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr>
+                
+                <tr style='background-color:lightgreen'>
+                    <td nowarp>5438
+                    </td>
+                    <td nowarp></td>
+                    <td nowarp>
+                        <input type=hidden class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style='background-color:lightgreen' 
+                    nowarp>
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp>A-开发实施</td>
+                    <td nowarp>[artf59914] 清结算支持场外-pangu-接入层场外账单上链支持批量代码开发</td>
+                    <td nowarp>4.0</td>
+                    <td nowarp>2026-03-04</td>
+                    <td nowarp>03/04 15:37</td>
+                    <td nowarp>韩兴宇</td>
+                    <td nowarp>通过(guoleijie)</td>
+
+                        
+                    <td nowarp>
+
+                    <div class="btn-group btn-group-xs" >
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr>
+                
+                <tr style='background-color:lightgreen'>
+                    <td nowarp>5437
+                    </td>
+                    <td nowarp></td>
+                    <td nowarp>
+                        <input type=hidden class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style='background-color:lightgreen' 
+                    nowarp>
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp>A-开发实施</td>
+                    <td nowarp>[artf59914] 清结算支持场外-pangu-service支持场内与场外的账单上链</td>
+                    <td nowarp>4.0</td>
+                    <td nowarp>2026-03-04</td>
+                    <td nowarp>03/04 15:36</td>
+                    <td nowarp>韩兴宇</td>
+                    <td nowarp>通过(guoleijie)</td>
+
+                        
+                    <td nowarp>
+
+                    <div class="btn-group btn-group-xs" >
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr>
+                
+                <tr style='background-color:lightgreen'>
+                    <td nowarp>5395
+                    </td>
+                    <td nowarp></td>
+                    <td nowarp>
+                        <input type=hidden class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style='background-color:lightgreen' 
+                    nowarp>
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp>A-开发实施</td>
+                    <td nowarp>[artf59914] 清结算支持场外-收付款状态上链-panguservice增加批量上链-账单数据批量插入chain_pool</td>
+                    <td nowarp>2.0</td>
+                    <td nowarp>2026-03-03</td>
+                    <td nowarp>03/03 14:50</td>
+                    <td nowarp>韩兴宇</td>
+                    <td nowarp>通过(guoleijie)</td>
+
+                        
+                    <td nowarp>
+
+                    <div class="btn-group btn-group-xs" >
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr>
+                
+                <tr style='background-color:lightgreen'>
+                    <td nowarp>5394
+                    </td>
+                    <td nowarp></td>
+                    <td nowarp>
+                        <input type=hidden class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style='background-color:lightgreen' 
+                    nowarp>
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp>A-开发实施</td>
+                    <td nowarp>[artf59914] 清结算支持场外-收付款状态上链-panguservice增加批量上链-账单层消息汇总到结算单层</td>
+                    <td nowarp>3.0</td>
+                    <td nowarp>2026-03-03</td>
+                    <td nowarp>03/03 14:50</td>
+                    <td nowarp>韩兴宇</td>
+                    <td nowarp>通过(guoleijie)</td>
+
+                        
+                    <td nowarp>
+
+                    <div class="btn-group btn-group-xs" >
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr>
+                
+                <tr style='background-color:lightgreen'>
+                    <td nowarp>5393
+                    </td>
+                    <td nowarp></td>
+                    <td nowarp>
+                        <input type=hidden class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style='background-color:lightgreen' 
+                    nowarp>
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp>A-开发实施</td>
+                    <td nowarp>[artf59914] 清结算支持场外-收付款状态上链-场内及场外上链涉及数据、表、字段核对  包括 t_biz_status, message_record,  event_message, chain_pool,  onchain_record等表，及关键字段from， to， payload 等。</td>
+                    <td nowarp>3.0</td>
+                    <td nowarp>2026-03-03</td>
+                    <td nowarp>03/03 10:21</td>
+                    <td nowarp>韩兴宇</td>
+                    <td nowarp>通过(guoleijie)</td>
+
+                        
+                    <td nowarp>
+
+                    <div class="btn-group btn-group-xs" >
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr>
+                
+                <tr style='background-color:lightgreen'>
+                    <td nowarp>5350
+                    </td>
+                    <td nowarp></td>
+                    <td nowarp>
+                        <input type=hidden class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style='background-color:lightgreen' 
+                    nowarp>
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp>A-开发实施</td>
+                    <td nowarp>[artf59914] 清结算支持场外-结算单列表-点击查看支持机构结算单号展示</td>
+                    <td nowarp>3.0</td>
+                    <td nowarp>2026-03-02</td>
+                    <td nowarp>03/02 15:09</td>
+                    <td nowarp>韩兴宇</td>
+                    <td nowarp>通过(guoleijie)</td>
+
+                        
+                    <td nowarp>
+
+                    <div class="btn-group btn-group-xs" >
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr>
+                
+                <tr style='background-color:lightgreen'>
+                    <td nowarp>5349
+                    </td>
+                    <td nowarp></td>
+                    <td nowarp>
+                        <input type=hidden class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style='background-color:lightgreen' 
+                    nowarp>
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp>A-开发实施</td>
+                    <td nowarp>[artf59914] 清结算支持场外-结算单列表-点击处理支持机构结算单号展示</td>
+                    <td nowarp>3.0</td>
+                    <td nowarp>2026-03-02</td>
+                    <td nowarp>03/02 15:09</td>
+                    <td nowarp>韩兴宇</td>
+                    <td nowarp>通过(guoleijie)</td>
+
+                        
+                    <td nowarp>
+
+                    <div class="btn-group btn-group-xs" >
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr>
+                
+                <tr style='background-color:lightgreen'>
+                    <td nowarp>5348
+                    </td>
+                    <td nowarp></td>
+                    <td nowarp>
+                        <input type=hidden class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style='background-color:lightgreen' 
+                    nowarp>
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp>A-开发实施</td>
+                    <td nowarp>[artf59914] 清结算支持场外-清结算工作台查询支持机构结算单号开发</td>
+                    <td nowarp>2.0</td>
+                    <td nowarp>2026-03-02</td>
+                    <td nowarp>03/02 15:04</td>
+                    <td nowarp>韩兴宇</td>
+                    <td nowarp>通过(guoleijie)</td>
+
+                        
+                    <td nowarp>
+
+                    <div class="btn-group btn-group-xs" >
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr>
+                
+                </tbody>
+            </table>
+        </form>
+        <br>
+        </table>
+
+</body>
+</html>

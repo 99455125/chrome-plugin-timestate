@@ -1,0 +1,1429 @@
+<html><head>
+    <title>我的日报</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <link href="../css/shie.css" rel="stylesheet" type="text/css">
+    
+
+    
+    <script type="text/javascript" src="../bower_components/jquery/jquery.js"></script>
+
+
+    <link rel="stylesheet" href="../bower_components/bootstrap/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../bower_components/font-awesome/css/font-awesome.css">
+    <script type="text/javascript" src="../includes/common.js"></script>
+
+    <script type="text/javascript" src="../bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="../bower_components/bootstrap/dist/css/bootstrap.min.css">
+
+    <link rel="stylesheet" href="../bower_components/toastr/toastr.css">
+    <script type="text/javascript" src="../bower_components/toastr/toastr.js"></script>
+
+    <link rel="stylesheet" href="../bower_components/bootstrapvalidator/dist/css/bootstrapValidator.min.css">
+    <script type="text/javascript" src="../bower_components/bootstrapvalidator/dist/js/bootstrapValidator.min.js"></script>
+
+    <link rel="stylesheet" href="../bower_components/bootstrap-table/dist/bootstrap-table.min.css">
+    <link rel="stylesheet" href="../bower_components/bootstrap-table/dist/bootstrap-table-locale-all.min.js">
+    <script type="text/javascript" src="../bower_components/bootstrap-table/dist/bootstrap-table.min.js"></script>
+
+    <link rel="stylesheet" href="../bower_components/datatables/media/css/dataTables.jqueryui.min.css">
+    <script type="text/javascript" src="../bower_components/datatables/media/js/jquery.dataTables.min.js"></script>
+
+    <script type="text/javascript" src="../bower_components/datatables/media/js/dataTables.bootstrap.min.js"></script>
+
+    <link rel="stylesheet" href="../bower_components/bootstrap3-dialog/dist/css/bootstrap-dialog.min.css">
+    <script type="text/javascript" src="../bower_components/bootstrap3-dialog/dist/js/bootstrap-dialog.min.js"></script>
+
+    <link rel="stylesheet" href="../bower_components/jquery-ui//themes/start/jquery-ui.css">
+    <link rel="stylesheet" href="../bower_components/jquery-ui//themes/start/theme.css">
+    <script type="text/javascript" language="javascript" src="../scripts/jquery-ui-1.11.1/jquery-ui.js"></script>
+    <script type="text/javascript" language="javascript" src="../scripts/jquery-ui-timepicker-addon.js"></script>
+
+    <link rel="stylesheet" href="../bower_components/bootstrap-select/dist/css/bootstrap-select.min.css">
+    <script type="text/javascript" src="../bower_components/bootstrap-select/dist/js/bootstrap-select.min.js"></script>
+    <script type="text/javascript" src="../bower_components/jquery.cookie.js"></script>
+
+    <script type="text/javascript" language="javascript" class="init">
+        function showdate(n) {
+            var uom = new Date(new Date() - 0 + n * 86400000);
+            uom = uom.getFullYear() + "-" + (uom.getMonth() + 1) + "-" + uom.getDate();
+            return uom;
+        }
+
+        function pick_date() {
+            console.log("pick report date");
+            $("#check_time").datepicker({dateFormat: "yy-mm-dd"}).datepicker("setDate", showdate(0));
+        }
+        function change_proj(proj_code) {
+            console.log(proj_code);
+        }
+
+        function change_item(no, item_type, my) {
+            console.log(no+"xxxxxx"+item_type);
+            console.log(my.parent().parent().children().find("select[name='sub_item']")[0]);
+            no=no--;
+            $.post("./get_item_type_do.jsp", {
+                item_type: item_type,
+                }, function (data, textStatus) {
+                    if (data.trim() != "") {
+                        var sub_item=new Array();
+                        sub_item=data.split(',');
+                        console.log(sub_item);
+                        $("#sub_item"+no).empty();
+                        var $current_sub_item=$('#tbl').find("#sub_item"+no);
+                        sub_item.forEach(function(item){
+                            optText=item.split('/')[1].trim();
+                            optValue=item.split('/')[0].trim();
+                            $("#sub_item"+no).append("<option value='"+optValue+"'>"+optText+"</option>");
+                        })
+                    }
+            });
+
+        }
+        $(document).ready(function () {
+
+            
+            $("#start_time").datepicker({dateFormat: "yy-mm-dd"}).datepicker("setDate", showdate(-6));
+            $("#end_time").datepicker({dateFormat: "yy-mm-dd"}).datepicker("setDate", showdate(+1));
+
+            $('#start_time').val('2026-03-01');
+            $('#end_time').val('2026-03-31');
+            $("#d_proj_code").change(function () {
+                toastr.info("xxx");
+            })
+
+            var table = $('#maintable').DataTable({
+                // "ordering": true
+                "order": [[3, "desc"]],
+                "lengthMenu": [ 20, 50, 100]
+            });
+
+
+            $("[name='log_btn']").click(function () {
+                var build_no = $(this).parent().children()[0].value;
+                var jenkins_job = $(this).parent().children()[1].value;
+                var proj_code = $("#proj_code_search").find("option:selected").val();
+                var proj_name = $(this).parent().parent().children()[2].innerHTML.trim();
+
+                console.log('./jenkins_deploy_log.jsp?proj_code=' + proj_code + jenkins_job + build_no);
+                BootstrapDialog.show({
+                    title: '发布日志【' + proj_name + '】',
+                    message: $('<div></div>').load('./jenkins_deploy_log.jsp?build_no=' + build_no + '&jenkins_job=' + jenkins_job),
+                    type: BootstrapDialog.TYPE_PRIMARY, // <-- Default value is BootstrapDialog.TYPE_PRIMARY
+                    size: BootstrapDialog.SIZE_WIDE,
+                    buttons: [
+                        {
+                            label: '关闭',
+                            action: function (dialogItself) {
+                                dialogItself.close();
+                            }
+                        }
+                    ]
+                });
+            });
+            $("#add_btn").click(function () {
+                var tmpid = $(this).parent().children()[0].value;
+                var proj_code = $("#proj_code_search").find("option:selected").val();
+                var sub_code=proj_code.split('-')[0];
+                var proj_name = $("#proj_code_search").find("option:selected").text().trim();
+                console.log($("#proj_code_search").index());
+                if ($("#proj_code_search option").index($("#proj_code_search option:selected")) < 0) {
+                    toastr.info("请选择提交的日报系统！");
+                    $("#proj_code_search").select();
+                    $(":button [data-id]").css("background","yellow");
+                    $('.selectpicker').selectpicker('show');
+
+                    console.log("not valid");
+                    return false;
+                }
+
+                BootstrapDialog.show({
+                    title: '系统日报【' + proj_name + '】,日期：<input disabled="disabled" id="check_time" name="check_time" type="date" style="color: dodgerblue; " placeholder="YYYY-MM-DD" value="2026-03-30">',
+                    message: $('<div></div>').load('./daily_report_dialog.jsp?sub_code=' + sub_code),
+                    type: BootstrapDialog.TYPE_PRIMARY, // <-- Default value is BootstrapDialog.TYPE_PRIMARY
+                    size: BootstrapDialog.SIZE_WIDE,
+                    closeByKeyboard: false,
+                    closeByBackdrop: false,
+                    dataBackdrop: false,
+                    draggable: true,
+                    buttons: [
+                        {
+                            label: '关闭',
+                            icon: 'glyphicon glyphicon-remove',
+                            cssClass: 'btn-secondary',
+                            action: function (dialogItself) {
+                                dialogItself.close();
+                            }
+                        },
+                        {
+                            label: '增加',
+                            icon: 'glyphicon glyphicon-plus',
+                            cssClass: 'btn-success',
+                            action: function (dialogItself) {
+                                var $tableBody = $('#tbl').find("tbody"),                                
+                                $trLast = $tableBody.find("tr:last"),
+                                $trNew = $trLast.clone(true);
+                                
+
+                                var chosen1=$tableBody.find("tr:last td:eq(1) option:selected").text();
+                                var chosen2=$tableBody.find("tr:last td:eq(2) option:selected").val();
+                                var chosen3=$tableBody.find("tr:last td:eq(3) option:selected").text();
+                               
+                                console.log($trNew.children()[0].innerHTML);
+                               
+                                $trNew.children()[0].innerHTML++;
+                                var index=$trNew.children()[0].innerHTML;
+                                $trNew.children().find("select[name='sub_item']").attr('id',"sub_item"+index);
+
+                                $trLast.after($trNew);
+                                $(".flag:not(:first)").removeAttr("disabled");
+
+                                $tableBody.find("tr:last td:eq(1) option").each(function(){
+                                    if($(this).text()==chosen1){
+                                        $(this).attr("selected",true);
+                                    }
+                                });
+
+                                $tableBody.find("tr:last td:eq(2) option").each(function(){
+                                    if($(this).val()==chosen2){
+                                        $(this).attr("selected",true);
+                                    }
+                                });
+
+                                $tableBody.find("tr:last td:eq(3) option").each(function(){
+                                    if($(this).text()==chosen3){
+                                        $(this).attr("selected",true);
+                                    }
+                                });
+                            }
+                        },
+                        {
+                            label: '删除',
+                            icon: 'glyphicon glyphicon-minus',
+                            cssClass: 'btn-danger',
+                            action: function (dialogItself) {
+                                //dialogItself.close();
+                                var $check_boxes = $("input[name='checkbox']:checked");                               
+                                $($check_boxes).each(function(){
+                                    var row=$(this).parent().parent();
+                                    row.remove();                               
+                                });                                                     
+                            }
+                        },
+                        {
+                            label: '提交',
+                            icon: 'glyphicon glyphicon-send',
+                            cssClass: 'btn-primary',
+                            action: function (dialogItself) {
+                                //var content= $("#detail_table").html();
+                                var d_proj_code = $("#v_proj_code").val();
+                                //console.log("table content:"+content);
+
+                                //获取全选之外的checkbox
+                                //var $check_boxes = $("input[name='checkbox']:checked");
+                                var $check_boxes = $("input[name='checkbox']");
+                                //var button_remove = $(".red");
+                                console.log($check_boxes.length);
+
+                                //if($check_boxes.length<=0){
+                                //    console.log($check_boxes.length);
+                                //    toastr.info('请勾选日报结果！');
+                                //    return;
+                                //}
+                                var item_content_array = new Array();
+                                var item_cost = new Array();
+                                var item_all = new Array();
+                                var vdata = "";
+                                var jsondata= {};
+                                var arrayJsondata = new Array();
+                                var cost_sum = 0.0;
+
+                                $($check_boxes).each(function(){
+                                    console.log($(this).val());
+                                    var item_content=$(this).parent().parent().children().find("input[name='item_content']").val();
+                                    var cost=parseFloat($(this).parent().parent().children().find("input[name='cost']").val());
+                                    var comments=$(this).parent().parent().children().find("input[name='comments']").val();
+                                    var proj_code=$(this).parent().parent().children().find("select[name='proj_code']").val();
+                                    var item_title=$(this).parent().parent().children().find("select[name='sub_item']").val();
+                                    var report_time=$(this).parent().parent().children().find("input[name='report_time']").val();
+                                    var no=$(this).parent().parent().children()[0].innerHTML;
+                                    console.log(report_time);
+                                    vdata=vdata+"####"+no+"="+$(this).val()+"="+item_content+"="+cost+"="+comments+"="+proj_code+"="+item_title+"="+report_time;
+                                    jsondata={"no": no, "item_content": item_content, "cost": cost, "comments": comments, "proj_code": proj_code, "item_title": item_title, "report_time": report_time, "submitter": "hanxingyu" }
+                                    arrayJsondata.push(jsondata);
+
+                                    item_content_array.push(item_content);
+                                    item_cost.push(cost);
+                                    item_all.push(item_content, cost, comments, proj_code, item_title, report_time);
+                                    //cost_sum = cost_sum + cost;
+                                    
+                                })
+                                //console.log("vadata is:"+vdata);
+                                console.log("cookie username is:"+$.cookie("username"));
+                                console.log("arrayJsondata is:"+JSON.stringify(arrayJsondata));
+
+                                var selected_proj_code=$("#selected_proj_code").val();
+                                console.log("系统名称："+selected_proj_code);
+                                if(selected_proj_code=="请选择系统名称"){
+                                    toastr.info("系统名称不能为空!");
+                                    $("#selected_proj_code").focus();
+                                    return false;
+                                }
+
+                                var item_type1=$("#item_type1").val();
+                                console.log("日报分类："+item_type1);
+
+                                if(item_type1=="请选择分类"){
+                                    toastr.info("日报分类不能为空!");
+                                    $("#item_type1").focus();
+                                    return false;
+                                }
+
+                                var check_time1 = $("#check_time").val().toString();
+                                var date  = new Date();
+                                var now = date.getFullYear()+'-'+ (date.getMonth()+1)+'-'+date.getDate();
+                                console.log(check_time1);
+                                console.log(now);
+
+                    //            if(check_time1>now){
+                    //                toastr.info("不能提交未来日报");
+                    //                return false;
+                    //            }
+
+                                var has_empty=0;
+                                item_content_array.forEach(function (item, index, array) {
+                                    console.log(item, index);
+                                    var regu = "^[ ]+$";
+                                    var re = new RegExp(regu);
+                                    if (item.length<6) has_empty=1;
+                                    if (re.test(item)) has_empty=1;
+                                });
+
+                                if (has_empty==1) {
+                                    toastr.info("请输入日报工作内容(大于5个字)！");
+                                    $("#item_content").focus();
+                                    return false;
+                                }
+                                console.log("item_all:"+item_all);
+
+                                var cost_sum = 0.0;
+                                item_cost.forEach(function (item, index, array) {
+                                    console.log("cost:", item, index);
+                                    cost_sum = cost_sum + item;
+                                });
+
+                                console.log("cost_sum:"+cost_sum);
+                                console.log(cost_sum);
+                                console.log(item_content_array);
+                                //if (cost_sum<4||cost_sum>12) {
+                                //    toastr.info("工时合计应大于4小时，小于12小时！");
+                                //    return false;
+                                //}
+
+                                //dialogItself.close();
+                                $.post("./daily_report_dialog_do.jsp", {
+                                    data : vdata,
+                                    arrayjsondata: JSON.stringify(arrayJsondata),
+                                    submitter: $.cookie("username"),
+                                    check_time: $("#check_time").val(),
+                                }, function (data, textStatus) {
+                                    if (data.trim() != "") {                                      
+                                        toastr.info("【" + proj_name + "】日报已经提交！" + data.trim());
+                                        dialogItself.close();
+                                        location.reload();
+                                    }
+                                });
+                            }
+                        }
+                    ]
+                });
+            });
+
+            $('#maintable tbody').on('click',"#update_btn" ,function(){
+                var tno = $(this).parent().parent().parent().children()[0].innerHTML.trim();
+                var version = $(this).parent().parent().parent().children()[3].innerHTML.trim();
+                var proj_name = $(this).parent().parent().parent().children()[2].innerText.trim();
+                var projCode = $(this).parent().parent().parent().children().eq(2).children().eq(0).val();
+                var proj_code = $(this).parent().parent().parent().children()[1].innerText.trim();
+                var item_title = $(this).parent().parent().parent().children()[4].innerText.trim();
+                
+                BootstrapDialog.show({
+                    title: '日报更新【' + version +"】",
+                    message: $('<div></div>').load('./report_update_dialog.jsp?no=' + tno + '&proj_code=' + projCode + '&item_title=' + item_title),
+                    draggable: true,
+                    type: BootstrapDialog.TYPE_PRIMARY, // <-- Default value is BootstrapDialog.TYPE_PRIMARY
+                    size: BootstrapDialog.SIZE_NORMAL,
+                    buttons: [
+                        {
+                            label: '关闭',
+                            action: function (dialogItself) {
+                                dialogItself.close();
+                            }
+                        },
+                        {
+                            label: '提交',
+                            icon: 'glyphicon glyphicon-send',
+                            cssClass: 'btn-primary',
+                            action: function (dialogItself) {
+
+                                var d_item_content=$("#d_item_content").val();
+                                var d_cost=$("#d_cost").val();
+                                var now_time=show_today();
+
+
+                                var check_time1 = $("#d_report_time").val().toString();
+                               
+                                var date  = new Date();
+                                var now = date .getFullYear()+'-'+ (date.getMonth()+1)+'-'+date .getDate();
+                               
+
+                                if(check_time1>now){
+                                    toastr.info("不能提交未来日报");
+                                    return false;
+                                }
+                                //dialogItself.close();
+                               if(d_cost<0.5||d_cost>12){
+                                   return false;
+                               }
+
+                               if(d_item_content.length<6){
+                                   toastr.info("日报字数太少，小于6个！");
+                                   return false;
+                               }
+                               
+                                $.post("./report_update_dialog_do.jsp", {
+                                      proj_code: $("#d_proj_code").val().split(',')[0],
+                                      report_time: $("#d_report_time").val(),
+                                      item_no: $("#sub_item1").val(),
+                                      content: $("#d_item_content").val(),
+                                      cost: $("#d_cost").val(),
+                                      insert_time : now_time,
+                                      no: tno
+                                }, function (data, textStatus) {
+                                      if (data.trim() != "") {
+                                          toastr.info("【" + proj_name + "】日报内容已经更新！" + data.trim());
+                                          dialogItself.close();
+                                          location.reload();
+                                    }
+                                });
+                            }
+                        }
+                    ]
+                });
+            });
+
+            $('#maintable tbody').on('click',"#del_btn" ,function(){
+                var row = $(this).parent().parent().parent();
+                var issue = $(this).parent().parent().parent().children()[3].innerHTML.trim();
+                var proj_name = $(this).parent().parent().parent().children()[2].innerHTML.trim();
+                var content = $(this).parent().parent().parent().children()[5].innerHTML.trim();
+                var tno = $(this).parent().parent().parent().children()[0].innerHTML.trim();
+                console.log(tno);
+
+                BootstrapDialog.confirm({
+                    title: '删除确认',
+                    message: '确认删除【' + content.trim() + '】日报记录?',
+                    type: BootstrapDialog.TYPE_DANGER, // <-- Default value is BootstrapDialog.TYPE_PRIMARY
+                    size: BootstrapDialog.SIZE_SMALL,
+                    closable: true, // <-- Default value is false
+                    draggable: true, // <-- Default value is false
+                    btnCancelLabel: '取消', // <-- Default value is 'Cancel',
+                    btnOKLabel: '删除', // <-- Default value is 'OK',
+                    btnOKClass: 'btn-danger', // <-- If you didn't specify it, dialog type will be used,
+                    callback: function (result) {
+                        // result will be true if button was click, while it will be false if users close the dialog directly.
+                        if (result) {
+                            $.get("./report_delete_do.jsp", {
+                                no: tno
+                            }, function (data, textStatus) {
+                                if (data.trim() == "success") {
+                                    row.remove();
+                                    toastr.success("删除成功！");
+                                    location.reload();
+                           }
+                                else {
+                                    toastr.error("删除失败！" + data.trim());
+                                }
+                            });
+                            //table.ajax.reload();
+                            //window.location.reload();
+                        } else {
+                            //dialogItself.close();
+                        }
+                    }
+                });
+            })
+
+
+            $("[name='detail_report']").click(function () {
+                var proj_code = $(this).parent().parent().children()[1].innerHTML;
+                var proj_name = $(this).parent().parent().children()[2].innerHTML;
+                var check_date = $(this).parent().parent().children()[3].innerHTML;
+                console.log('./detail_report.jsp?proj_code=' + proj_code + '&check_date=' + check_date);
+                BootstrapDialog.show({
+                    title: '日报报告【' + proj_name + '】',
+                    message: $('<div></div>').load('./detail_report.jsp?proj_code=' + proj_code+'&check_date='+check_date),
+                    type: BootstrapDialog.TYPE_INFO, // <-- Default value is BootstrapDialog.TYPE_PRIMARY
+                    size: BootstrapDialog.SIZE_WIDE,
+                    closable: false,
+                    buttons: [
+                        {
+                            label: '关闭',
+                            action: function (dialogItself) {
+                                dialogItself.close();
+                            }
+                        }]
+                });
+            });
+
+            function show_today(){
+                var myDate=new Date();
+                year=myDate.getFullYear().toString();
+                month=(myDate.getMonth()+1).toString();
+                day=myDate.getDate().toString();
+                hour=myDate.getHours().toString();
+                minute=myDate.getMinutes().toString();
+                var today=year+'-'+month+'-'+day+' '+hour+':'+minute;
+                return today;
+            }
+
+            $("#show_today").click(function(){
+                $("#show_today").val("显示今天");
+                $("#search_btn").val("");
+           })
+
+
+           $("#search_btn").click(function(){
+                $("#show_today").val("");
+                $("#search_btn").val("搜索");
+           })
+        })
+    </script>
+    <style>
+         .modal-dialog {
+            width: 90%;
+        }
+    </style>
+    <style>
+        div.container {
+            width: 98%;
+        }
+
+        .input[type="text"] {
+            width: 150px;
+            display: block;
+            margin-bottom: 10px;
+            background-color: yellow;
+            font-family: Verdana, Arial;
+        }
+
+        .td {
+            height: 20px;
+        }
+
+        .modal .modal-body {
+            max-height: 90%;
+            overflow-y: auto;
+        }
+
+        .btn-custom-color {
+            background-color: #ff6b6b;
+            border-color: #ff6b6b;
+            color: #ffffff;
+        }
+
+        .btn-custom-color:hover {
+            background-color: #ee5253;
+            border-color: #ee5253;
+            color: #ffffff;
+        }
+    </style>
+</head>
+
+<body style="">
+
+<br>
+
+<div class="container" id="main_div1">
+    <section>
+        <form action="#" method="post" class="form-inline">
+             
+                <label for="proj_code_search"><i class="fa fa-book" aria-hidden="true"></i>&nbsp;我的日报</label>
+                <div class="btn-group bootstrap-select fit-width"><button type="button" class="btn dropdown-toggle btn-default" data-toggle="dropdown" role="button" data-id="proj_code_search" title="所有分类"><span class="filter-option pull-left">所有分类</span>&nbsp;<span class="bs-caret"><span class="caret"></span></span></button><div class="dropdown-menu open" role="combobox"><ul class="dropdown-menu inner" role="listbox" aria-expanded="false"><li data-original-index="0" class="selected"><a tabindex="0" class="" data-tokens="null" role="option" aria-disabled="false" aria-selected="true"><span class="text">所有分类</span><span class="glyphicon glyphicon-ok check-mark"></span></a></li><li data-original-index="1"><a tabindex="0" class="" data-tokens="null" role="option" aria-disabled="false" aria-selected="false"><span class="text">01-需求管理/咨询
+
+                    </span><span class="glyphicon glyphicon-ok check-mark"></span></a></li><li data-original-index="2"><a tabindex="0" class="" data-tokens="null" role="option" aria-disabled="false" aria-selected="false"><span class="text">02-架构/系统设计
+
+                    </span><span class="glyphicon glyphicon-ok check-mark"></span></a></li><li data-original-index="3"><a tabindex="0" class="" data-tokens="null" role="option" aria-disabled="false" aria-selected="false"><span class="text">03-开发及单元测试
+
+                    </span><span class="glyphicon glyphicon-ok check-mark"></span></a></li><li data-original-index="4"><a tabindex="0" class="" data-tokens="null" role="option" aria-disabled="false" aria-selected="false"><span class="text">04-系统功能测试
+
+                    </span><span class="glyphicon glyphicon-ok check-mark"></span></a></li><li data-original-index="5"><a tabindex="0" class="" data-tokens="null" role="option" aria-disabled="false" aria-selected="false"><span class="text">05-集成测试
+
+                    </span><span class="glyphicon glyphicon-ok check-mark"></span></a></li><li data-original-index="6"><a tabindex="0" class="" data-tokens="null" role="option" aria-disabled="false" aria-selected="false"><span class="text">06-用户测试
+
+                    </span><span class="glyphicon glyphicon-ok check-mark"></span></a></li><li data-original-index="7"><a tabindex="0" class="" data-tokens="null" role="option" aria-disabled="false" aria-selected="false"><span class="text">07-发布支持
+
+                    </span><span class="glyphicon glyphicon-ok check-mark"></span></a></li><li data-original-index="8"><a tabindex="0" class="" data-tokens="null" role="option" aria-disabled="false" aria-selected="false"><span class="text">08-项目管理
+
+                    </span><span class="glyphicon glyphicon-ok check-mark"></span></a></li><li data-original-index="9"><a tabindex="0" class="" data-tokens="null" role="option" aria-disabled="false" aria-selected="false"><span class="text">09-客服
+
+                    </span><span class="glyphicon glyphicon-ok check-mark"></span></a></li><li data-original-index="10"><a tabindex="0" class="" data-tokens="null" role="option" aria-disabled="false" aria-selected="false"><span class="text">10-应用运维
+
+                    </span><span class="glyphicon glyphicon-ok check-mark"></span></a></li><li data-original-index="11"><a tabindex="0" class="" data-tokens="null" role="option" aria-disabled="false" aria-selected="false"><span class="text">99-部门和公司管理
+
+                    </span><span class="glyphicon glyphicon-ok check-mark"></span></a></li></ul></div><select class="selectpicker" data-width="fit" required="required" id="proj_code_search" style="height: 15px; width: 160px;" readonly="" tabindex="-98">
+                    <option value="%" selected="selected">所有分类</option>
+                    
+                    <option placeholder="xxx" value="01-需求管理/咨询">01-需求管理/咨询
+
+                    </option>
+                    
+                    <option placeholder="xxx" value="02-架构/系统设计">02-架构/系统设计
+
+                    </option>
+                    
+                    <option placeholder="xxx" value="03-开发及单元测试">03-开发及单元测试
+
+                    </option>
+                    
+                    <option placeholder="xxx" value="04-系统功能测试">04-系统功能测试
+
+                    </option>
+                    
+                    <option placeholder="xxx" value="05-集成测试">05-集成测试
+
+                    </option>
+                    
+                    <option placeholder="xxx" value="06-用户测试">06-用户测试
+
+                    </option>
+                    
+                    <option placeholder="xxx" value="07-发布支持">07-发布支持
+
+                    </option>
+                    
+                    <option placeholder="xxx" value="08-项目管理">08-项目管理
+
+                    </option>
+                    
+                    <option placeholder="xxx" value="09-客服">09-客服
+
+                    </option>
+                    
+                    <option placeholder="xxx" value="10-应用运维">10-应用运维
+
+                    </option>
+                    
+                    <option placeholder="xxx" value="99-部门和公司管理">99-部门和公司管理
+
+                    </option>
+                    
+                </select></div>
+
+                <label for="start_time">开始时间：</label><input style="height: 18px; width: 90px;" class="form-control input-sm hasDatepicker" name="start_time" id="start_time">
+                <label for="end_time">结束时间：</label><input style="height: 18px; width: 90px;" class="form-control input-sm hasDatepicker" name="end_time" id="end_time">
+                <div class="btn-group btn-group-sm">
+
+                <button class="btn btn-sm btn-primary" name="search" id="search_btn" type="submit"><i class="fa fa-search" aria-hidden="true"></i>搜索
+                </button>
+
+                <button type="button" class="btn btn-sm btn-warning" id="add_btn"><i class="icon-plus icon-spin"></i><i class="fa fa-plus" aria-hidden="true"></i>&nbsp;日报
+                </button>
+
+                <button type="submit" name="show" class="btn btn-sm btn-info" id="show_today"><i class="icon-refresh icon-spin"></i><i class="fa fa-desktop" aria-hidden="true"></i>&nbsp;显示当日
+                </button>
+                <button type="button" onclick="javascript:window.location.href='../daily_report/calendar/index.jsp'" class="btn btn-sm btn-success" id="calendar_view"><i class="icon-refresh icon-spin"></i><i class="fa fa-calendar" aria-hidden="true"></i>&nbsp;日历视图
+                </button>
+                <button type="button" onclick="javascript:window.location.href='../daily_report/my_report.jsp'" class="btn btn-sm btn-primary" id="list_view"><i class="icon-refresh icon-spin"></i><i class="fa fa-list" aria-hidden="true"></i>&nbsp;列表视图
+                </button>
+                <button type="button" class="btn btn-sm btn-default" onclick="location.reload();"><i class="icon-refresh icon-spin"></i><i class="fa fa-refresh" aria-hidden="true"></i>&nbsp;刷新
+                </button>
+                
+                </div>
+            
+        </form>
+        <hr>
+        <div class="progress progress-striped" style="background-color: gray;">
+
+        
+                <div class="progress-bar  progress-bar-primary" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 2%;" %="">D1
+                
+               <span class="sr-only">40% 完成</span>
+                </div>
+                
+                <div class="progress-bar  progress-bar-info" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 2%;" %="">D7
+                
+               <span class="sr-only">40% 完成</span>
+                </div>
+                
+                <div class="progress-bar  progress-bar-info" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 2%;" %="">D6
+                
+               <span class="sr-only">40% 完成</span>
+                </div>
+                
+                <div class="progress-bar  progress-bar-success" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 14%;" %="">D5
+                (8hrs:100%)
+               <span class="sr-only">40% 完成</span>
+                </div>
+                
+                <div class="progress-bar  progress-bar-danger" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 14%;" %="">D4
+                (8hrs:100%)
+               <span class="sr-only">40% 完成</span>
+                </div>
+                
+                <div class="progress-bar  progress-bar-info" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 14%;" %="">D3
+                (8hrs:100%)
+               <span class="sr-only">40% 完成</span>
+                </div>
+                
+                <div class="progress-bar  progress-bar-warning" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 14%;" %="">D2
+                (8hrs:100%)
+               <span class="sr-only">40% 完成</span>
+                </div>
+                
+
+        </div>
+        <hr>
+        <form name="mainform" id="mainform" method="post">
+            <div id="maintable_wrapper" class="dataTables_wrapper form-inline dt-bootstrap no-footer"><div class="row"><div class="col-sm-6"><div class="dataTables_length" id="maintable_length"><label>Show <select name="maintable_length" aria-controls="maintable" class="form-control input-sm"><option value="20">20</option><option value="50">50</option><option value="100">100</option></select> entries</label></div></div><div class="col-sm-6"><div id="maintable_filter" class="dataTables_filter"><label>Search:<input type="search" class="form-control input-sm" placeholder="" aria-controls="maintable"></label></div></div></div><div class="row"><div class="col-sm-12"><table id="maintable" class="display compact dataTable no-footer" cellspacing="1" width="100%" style="table-layout: fixed; width: 100%;" role="grid" aria-describedby="maintable_info">
+                <thead>
+                <tr align="left" role="row"><th nowrap="" width="20" class="sorting" tabindex="0" aria-controls="maintable" rowspan="1" colspan="1" aria-label="序号: activate to sort column ascending" style="width: 26px;">序号</th><th nowrap="" width="1px" style="width: 4px;" class="sorting" tabindex="0" aria-controls="maintable" rowspan="1" colspan="1" aria-label=": activate to sort column ascending"></th><th nowrap="" width="60" class="sorting" tabindex="0" aria-controls="maintable" rowspan="1" colspan="1" aria-label="项目名称: activate to sort column ascending" style="width: 72px;">项目名称</th><th nowrap="" width="70" class="sorting_desc" tabindex="0" aria-controls="maintable" rowspan="1" colspan="1" aria-sort="descending" aria-label="日报分类: activate to sort column ascending" style="width: 84px;">日报分类</th><th nowrap="" width="70" class="sorting" tabindex="0" aria-controls="maintable" rowspan="1" colspan="1" aria-label="分类子项: activate to sort column ascending" style="width: 84px;">分类子项</th><th nowrap="" width="200" class="sorting" tabindex="0" aria-controls="maintable" rowspan="1" colspan="1" aria-label="日报内容: activate to sort column ascending" style="width: 233px;">日报内容</th><th nowrap="" width="30" class="sorting" tabindex="0" aria-controls="maintable" rowspan="1" colspan="1" aria-label="用时(H): activate to sort column ascending" style="width: 38px;">用时(H)</th><th nowrap="" width="40" class="sorting" tabindex="0" aria-controls="maintable" rowspan="1" colspan="1" aria-label="日报日期: activate to sort column ascending" style="width: 49px;">日报日期</th><th nowrap="" width="40" class="sorting" tabindex="0" aria-controls="maintable" rowspan="1" colspan="1" aria-label="提交时间: activate to sort column ascending" style="width: 49px;">提交时间</th><th nowrap="" width="40" class="sorting" tabindex="0" aria-controls="maintable" rowspan="1" colspan="1" aria-label="提交人: activate to sort column ascending" style="width: 49px;">提交人</th><th nowrap="" width="60" class="sorting" tabindex="0" aria-controls="maintable" rowspan="1" colspan="1" aria-label="审核状态(人): activate to sort column ascending" style="width: 72px;">审核状态(人)</th><th nowrap="" width="80" class="sorting" tabindex="0" aria-controls="maintable" rowspan="1" colspan="1" aria-label="更新&amp;amp;删除: activate to sort column ascending" style="width: 95px;">更新&amp;删除</th></tr>
+                </thead>
+                <tbody>
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                <tr role="row" class="odd">
+                    <td nowarp="">6303
+                    </td>
+                    <td nowarp=""></td>
+                    <td nowarp="">
+                        <input type="hidden" class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td nowarp="" class="sorting_1">
+                        04-系统功能测试
+                    </td>
+                    <td nowarp="">B-测试用例审阅</td>
+                    <td nowarp="">[artf59914] 清结算支持场外-测试demo评审-第一次评审会议</td>
+                    <td nowarp="">3.0</td>
+                    <td nowarp="">2026-03-26</td>
+                    <td nowarp="">03/26 09:53</td>
+                    <td nowarp="">韩兴宇</td>
+                    <td nowarp="">待审核</td>
+
+                        
+                    <td nowarp="">
+
+                    <div class="btn-group btn-group-xs">
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr><tr role="row" class="even">
+                    <td nowarp="">6415
+                    </td>
+                    <td nowarp=""></td>
+                    <td nowarp="">
+                        <input type="hidden" class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td nowarp="" class="sorting_1">
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp="">A-开发实施</td>
+                    <td nowarp="">[artf59914] 清结算支持场外-限流与日志优化：关闭下不注册任何bean</td>
+                    <td nowarp="">4.0</td>
+                    <td nowarp="">2026-03-27</td>
+                    <td nowarp="">03/27 18:10</td>
+                    <td nowarp="">韩兴宇</td>
+                    <td nowarp="">待审核</td>
+
+                        
+                    <td nowarp="">
+
+                    <div class="btn-group btn-group-xs">
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr><tr role="row" class="odd">
+                    <td nowarp="">6414
+                    </td>
+                    <td nowarp=""></td>
+                    <td nowarp="">
+                        <input type="hidden" class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td nowarp="" class="sorting_1">
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp="">A-开发实施</td>
+                    <td nowarp="">[artf59914] 清结算支持场外-1000条账单sql优化协助支持</td>
+                    <td nowarp="">4.0</td>
+                    <td nowarp="">2026-03-27</td>
+                    <td nowarp="">03/27 18:10</td>
+                    <td nowarp="">韩兴宇</td>
+                    <td nowarp="">待审核</td>
+
+                        
+                    <td nowarp="">
+
+                    <div class="btn-group btn-group-xs">
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr><tr style="background-color:lightgreen" role="row" class="even">
+                    <td nowarp="">6260
+                    </td>
+                    <td nowarp=""></td>
+                    <td nowarp="">
+                        <input type="hidden" class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style="background-color:lightgreen" nowarp="" class="sorting_1">
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp="">A-开发实施</td>
+                    <td nowarp="">[artf59914] 清结算支持场外-代码评审，demo演示，- 第四次cr</td>
+                    <td nowarp="">4.0</td>
+                    <td nowarp="">2026-03-25</td>
+                    <td nowarp="">03/25 10:49</td>
+                    <td nowarp="">韩兴宇</td>
+                    <td nowarp="">通过(guoleijie)</td>
+
+                        
+                    <td nowarp="">
+
+                    <div class="btn-group btn-group-xs">
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr><tr style="background-color:lightgreen" role="row" class="odd">
+                    <td nowarp="">6259
+                    </td>
+                    <td nowarp=""></td>
+                    <td nowarp="">
+                        <input type="hidden" class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style="background-color:lightgreen" nowarp="" class="sorting_1">
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp="">A-开发实施</td>
+                    <td nowarp="">[artf59914] 清结算支持场外-pangu接口日志db入库优化</td>
+                    <td nowarp="">4.0</td>
+                    <td nowarp="">2026-03-25</td>
+                    <td nowarp="">03/25 10:49</td>
+                    <td nowarp="">韩兴宇</td>
+                    <td nowarp="">通过(guoleijie)</td>
+
+                        
+                    <td nowarp="">
+
+                    <div class="btn-group btn-group-xs">
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr><tr style="background-color:lightgreen" role="row" class="even">
+                    <td nowarp="">6254
+                    </td>
+                    <td nowarp=""></td>
+                    <td nowarp="">
+                        <input type="hidden" class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style="background-color:lightgreen" nowarp="" class="sorting_1">
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp="">A-开发实施</td>
+                    <td nowarp="">[artf59914] 清结算支持场外-pangu限流和日志文档梳理</td>
+                    <td nowarp="">2.0</td>
+                    <td nowarp="">2026-03-24</td>
+                    <td nowarp="">03/24 21:09</td>
+                    <td nowarp="">韩兴宇</td>
+                    <td nowarp="">通过(guoleijie)</td>
+
+                        
+                    <td nowarp="">
+
+                    <div class="btn-group btn-group-xs">
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr><tr style="background-color:lightgreen" role="row" class="odd">
+                    <td nowarp="">6253
+                    </td>
+                    <td nowarp=""></td>
+                    <td nowarp="">
+                        <input type="hidden" class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style="background-color:lightgreen" nowarp="" class="sorting_1">
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp="">A-开发实施</td>
+                    <td nowarp="">[artf59914] 清结算支持场外-上链任务流改造开发</td>
+                    <td nowarp="">3.0</td>
+                    <td nowarp="">2026-03-24</td>
+                    <td nowarp="">03/24 21:09</td>
+                    <td nowarp="">韩兴宇</td>
+                    <td nowarp="">通过(guoleijie)</td>
+
+                        
+                    <td nowarp="">
+
+                    <div class="btn-group btn-group-xs">
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr><tr style="background-color:lightgreen" role="row" class="even">
+                    <td nowarp="">6252
+                    </td>
+                    <td nowarp=""></td>
+                    <td nowarp="">
+                        <input type="hidden" class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style="background-color:lightgreen" nowarp="" class="sorting_1">
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp="">A-开发实施</td>
+                    <td nowarp="">[artf59914] 清结算支持场外-上链任务流改造设计</td>
+                    <td nowarp="">3.0</td>
+                    <td nowarp="">2026-03-24</td>
+                    <td nowarp="">03/24 21:09</td>
+                    <td nowarp="">韩兴宇</td>
+                    <td nowarp="">通过(guoleijie)</td>
+
+                        
+                    <td nowarp="">
+
+                    <div class="btn-group btn-group-xs">
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr><tr style="background-color:lightgreen" role="row" class="odd">
+                    <td nowarp="">6163
+                    </td>
+                    <td nowarp=""></td>
+                    <td nowarp="">
+                        <input type="hidden" class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style="background-color:lightgreen" nowarp="" class="sorting_1">
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp="">A-开发实施</td>
+                    <td nowarp="">[artf59914] 清结算支持场外-日志优化-取消starter，合并到pangu</td>
+                    <td nowarp="">2.0</td>
+                    <td nowarp="">2026-03-23</td>
+                    <td nowarp="">03/23 13:49</td>
+                    <td nowarp="">韩兴宇</td>
+                    <td nowarp="">通过(guoleijie)</td>
+
+                        
+                    <td nowarp="">
+
+                    <div class="btn-group btn-group-xs">
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr><tr style="background-color:lightgreen" role="row" class="even">
+                    <td nowarp="">6162
+                    </td>
+                    <td nowarp=""></td>
+                    <td nowarp="">
+                        <input type="hidden" class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style="background-color:lightgreen" nowarp="" class="sorting_1">
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp="">A-开发实施</td>
+                    <td nowarp="">[artf59914] 清结算支持场外-业务与上链完全解绑优化设计</td>
+                    <td nowarp="">2.0</td>
+                    <td nowarp="">2026-03-23</td>
+                    <td nowarp="">03/23 13:48</td>
+                    <td nowarp="">韩兴宇</td>
+                    <td nowarp="">通过(guoleijie)</td>
+
+                        
+                    <td nowarp="">
+
+                    <div class="btn-group btn-group-xs">
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr><tr style="background-color:lightgreen" role="row" class="odd">
+                    <td nowarp="">6161
+                    </td>
+                    <td nowarp=""></td>
+                    <td nowarp="">
+                        <input type="hidden" class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style="background-color:lightgreen" nowarp="" class="sorting_1">
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp="">A-开发实施</td>
+                    <td nowarp="">[artf59914] 清结算支持场外-清结算文档、代码 code review</td>
+                    <td nowarp="">4.0</td>
+                    <td nowarp="">2026-03-23</td>
+                    <td nowarp="">03/23 13:47</td>
+                    <td nowarp="">韩兴宇</td>
+                    <td nowarp="">通过(guoleijie)</td>
+
+                        
+                    <td nowarp="">
+
+                    <div class="btn-group btn-group-xs">
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr><tr style="background-color:lightgreen" role="row" class="even">
+                    <td nowarp="">6109
+                    </td>
+                    <td nowarp=""></td>
+                    <td nowarp="">
+                        <input type="hidden" class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style="background-color:lightgreen" nowarp="" class="sorting_1">
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp="">A-开发实施</td>
+                    <td nowarp="">[artf59914] 清结算支持场外-接口日志starter接入及优化</td>
+                    <td nowarp="">3.0</td>
+                    <td nowarp="">2026-03-20</td>
+                    <td nowarp="">03/20 15:39</td>
+                    <td nowarp="">韩兴宇</td>
+                    <td nowarp="">通过(guoleijie)</td>
+
+                        
+                    <td nowarp="">
+
+                    <div class="btn-group btn-group-xs">
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr><tr style="background-color:lightgreen" role="row" class="odd">
+                    <td nowarp="">6108
+                    </td>
+                    <td nowarp=""></td>
+                    <td nowarp="">
+                        <input type="hidden" class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style="background-color:lightgreen" nowarp="" class="sorting_1">
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp="">A-开发实施</td>
+                    <td nowarp="">[artf59914] 清结算支持场外-限流增加全局开关</td>
+                    <td nowarp="">2.0</td>
+                    <td nowarp="">2026-03-20</td>
+                    <td nowarp="">03/20 15:39</td>
+                    <td nowarp="">韩兴宇</td>
+                    <td nowarp="">通过(guoleijie)</td>
+
+                        
+                    <td nowarp="">
+
+                    <div class="btn-group btn-group-xs">
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr><tr style="background-color:lightgreen" role="row" class="even">
+                    <td nowarp="">6107
+                    </td>
+                    <td nowarp=""></td>
+                    <td nowarp="">
+                        <input type="hidden" class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style="background-color:lightgreen" nowarp="" class="sorting_1">
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp="">A-开发实施</td>
+                    <td nowarp="">[artf59914] 清结算支持场外-账单批量上链消息优化-取消账单批量消息</td>
+                    <td nowarp="">3.0</td>
+                    <td nowarp="">2026-03-20</td>
+                    <td nowarp="">03/20 15:39</td>
+                    <td nowarp="">韩兴宇</td>
+                    <td nowarp="">通过(guoleijie)</td>
+
+                        
+                    <td nowarp="">
+
+                    <div class="btn-group btn-group-xs">
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr><tr style="background-color:lightgreen" role="row" class="odd">
+                    <td nowarp="">6045
+                    </td>
+                    <td nowarp=""></td>
+                    <td nowarp="">
+                        <input type="hidden" class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style="background-color:lightgreen" nowarp="" class="sorting_1">
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp="">C-单元测试</td>
+                    <td nowarp="">[artf59914] 清结算支持场外-日志优化-通用事件日志starter接入测试</td>
+                    <td nowarp="">3.0</td>
+                    <td nowarp="">2026-03-19</td>
+                    <td nowarp="">03/19 09:21</td>
+                    <td nowarp="">韩兴宇</td>
+                    <td nowarp="">通过(guoleijie)</td>
+
+                        
+                    <td nowarp="">
+
+                    <div class="btn-group btn-group-xs">
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr><tr style="background-color:lightgreen" role="row" class="even">
+                    <td nowarp="">6044
+                    </td>
+                    <td nowarp=""></td>
+                    <td nowarp="">
+                        <input type="hidden" class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style="background-color:lightgreen" nowarp="" class="sorting_1">
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp="">A-开发实施</td>
+                    <td nowarp="">[artf59914] 清结算支持场外-日志优化-通用事件日志starter开发</td>
+                    <td nowarp="">3.0</td>
+                    <td nowarp="">2026-03-19</td>
+                    <td nowarp="">03/19 09:21</td>
+                    <td nowarp="">韩兴宇</td>
+                    <td nowarp="">通过(guoleijie)</td>
+
+                        
+                    <td nowarp="">
+
+                    <div class="btn-group btn-group-xs">
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr><tr style="background-color:lightgreen" role="row" class="odd">
+                    <td nowarp="">6043
+                    </td>
+                    <td nowarp=""></td>
+                    <td nowarp="">
+                        <input type="hidden" class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style="background-color:lightgreen" nowarp="" class="sorting_1">
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp="">A-开发实施</td>
+                    <td nowarp="">[artf59914] 清结算支持场外-测试案例评审</td>
+                    <td nowarp="">2.0</td>
+                    <td nowarp="">2026-03-19</td>
+                    <td nowarp="">03/19 09:21</td>
+                    <td nowarp="">韩兴宇</td>
+                    <td nowarp="">通过(guoleijie)</td>
+
+                        
+                    <td nowarp="">
+
+                    <div class="btn-group btn-group-xs">
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr><tr style="background-color:lightgreen" role="row" class="even">
+                    <td nowarp="">5985
+                    </td>
+                    <td nowarp=""></td>
+                    <td nowarp="">
+                        <input type="hidden" class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style="background-color:lightgreen" nowarp="" class="sorting_1">
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp="">A-开发实施</td>
+                    <td nowarp="">[artf59914] 清结算支持场外-pangu机构限流开发</td>
+                    <td nowarp="">5.0</td>
+                    <td nowarp="">2026-03-17</td>
+                    <td nowarp="">03/17 18:02</td>
+                    <td nowarp="">韩兴宇</td>
+                    <td nowarp="">通过(guoleijie)</td>
+
+                        
+                    <td nowarp="">
+
+                    <div class="btn-group btn-group-xs">
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr><tr style="background-color:lightgreen" role="row" class="odd">
+                    <td nowarp="">5984
+                    </td>
+                    <td nowarp=""></td>
+                    <td nowarp="">
+                        <input type="hidden" class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style="background-color:lightgreen" nowarp="" class="sorting_1">
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp="">A-开发实施</td>
+                    <td nowarp="">[artf59914] 清结算支持场外-pangu机构限流设计</td>
+                    <td nowarp="">3.0</td>
+                    <td nowarp="">2026-03-17</td>
+                    <td nowarp="">03/17 18:02</td>
+                    <td nowarp="">韩兴宇</td>
+                    <td nowarp="">通过(guoleijie)</td>
+
+                        
+                    <td nowarp="">
+
+                    <div class="btn-group btn-group-xs">
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr><tr style="background-color:lightgreen" role="row" class="even">
+                    <td nowarp="">5946
+                    </td>
+                    <td nowarp=""></td>
+                    <td nowarp="">
+                        <input type="hidden" class="proj_code" id="proj_code" name="proj_code" value="200018">
+                        国际再保险业务平台</td>
+                    <td style="background-color:lightgreen" nowarp="" class="sorting_1">
+                        03-开发及单元测试
+                    </td>
+                    <td nowarp="">A-开发实施</td>
+                    <td nowarp="">[artf59914] 清结算支持场外-清结算网关黑名单测试</td>
+                    <td nowarp="">2.0</td>
+                    <td nowarp="">2026-03-16</td>
+                    <td nowarp="">03/16 18:08</td>
+                    <td nowarp="">韩兴宇</td>
+                    <td nowarp="">通过(guoleijie)</td>
+
+                        
+                    <td nowarp="">
+
+                    <div class="btn-group btn-group-xs">
+                            <button name="update_btn" id="update_btn" type="button" class="btn btn-primary" style="height: 26px">
+                                <i class="fa fa-clipboard"></i> 更新
+                            </button>
+                            <button name="del_btn" id="del_btn" type="button" class="btn btn-danger" style="height: 26px">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                        </div>
+                    </td>
+                    
+                </tr></tbody>
+            </table></div></div><div class="row"><div class="col-sm-5"><div class="dataTables_info" id="maintable_info" role="status" aria-live="polite">Showing 1 to 20 of 54 entries</div></div><div class="col-sm-7"><div class="dataTables_paginate paging_simple_numbers" id="maintable_paginate"><ul class="pagination"><li class="paginate_button previous disabled" id="maintable_previous"><a href="#" aria-controls="maintable" data-dt-idx="0" tabindex="0">Previous</a></li><li class="paginate_button active"><a href="#" aria-controls="maintable" data-dt-idx="1" tabindex="0">1</a></li><li class="paginate_button "><a href="#" aria-controls="maintable" data-dt-idx="2" tabindex="0">2</a></li><li class="paginate_button "><a href="#" aria-controls="maintable" data-dt-idx="3" tabindex="0">3</a></li><li class="paginate_button next" id="maintable_next"><a href="#" aria-controls="maintable" data-dt-idx="4" tabindex="0">Next</a></li></ul></div></div></div></div>
+        </form>
+        <br>
+        
+
+
+
+</section></div><div id="ui-datepicker-div" class="ui-datepicker ui-widget ui-widget-content ui-helper-clearfix ui-corner-all"><div class="ui-datepicker-header ui-widget-header ui-helper-clearfix ui-corner-all"><a class="ui-datepicker-prev ui-corner-all" data-handler="prev" data-event="click" title="Prev"><span class="ui-icon ui-icon-circle-triangle-w">Prev</span></a><a class="ui-datepicker-next ui-corner-all" data-handler="next" data-event="click" title="Next"><span class="ui-icon ui-icon-circle-triangle-e">Next</span></a><div class="ui-datepicker-title"><span class="ui-datepicker-month">March</span>&nbsp;<span class="ui-datepicker-year">2026</span></div></div><table class="ui-datepicker-calendar"><thead><tr><th scope="col" class="ui-datepicker-week-end"><span title="Sunday">Su</span></th><th scope="col"><span title="Monday">Mo</span></th><th scope="col"><span title="Tuesday">Tu</span></th><th scope="col"><span title="Wednesday">We</span></th><th scope="col"><span title="Thursday">Th</span></th><th scope="col"><span title="Friday">Fr</span></th><th scope="col" class="ui-datepicker-week-end"><span title="Saturday">Sa</span></th></tr></thead><tbody><tr><td class=" ui-datepicker-week-end " data-handler="selectDay" data-event="click" data-month="2" data-year="2026"><a class="ui-state-default" href="#">1</a></td><td class=" " data-handler="selectDay" data-event="click" data-month="2" data-year="2026"><a class="ui-state-default" href="#">2</a></td><td class=" " data-handler="selectDay" data-event="click" data-month="2" data-year="2026"><a class="ui-state-default" href="#">3</a></td><td class=" " data-handler="selectDay" data-event="click" data-month="2" data-year="2026"><a class="ui-state-default" href="#">4</a></td><td class=" " data-handler="selectDay" data-event="click" data-month="2" data-year="2026"><a class="ui-state-default" href="#">5</a></td><td class=" " data-handler="selectDay" data-event="click" data-month="2" data-year="2026"><a class="ui-state-default" href="#">6</a></td><td class=" ui-datepicker-week-end " data-handler="selectDay" data-event="click" data-month="2" data-year="2026"><a class="ui-state-default" href="#">7</a></td></tr><tr><td class=" ui-datepicker-week-end " data-handler="selectDay" data-event="click" data-month="2" data-year="2026"><a class="ui-state-default" href="#">8</a></td><td class=" " data-handler="selectDay" data-event="click" data-month="2" data-year="2026"><a class="ui-state-default" href="#">9</a></td><td class=" " data-handler="selectDay" data-event="click" data-month="2" data-year="2026"><a class="ui-state-default" href="#">10</a></td><td class=" " data-handler="selectDay" data-event="click" data-month="2" data-year="2026"><a class="ui-state-default" href="#">11</a></td><td class=" " data-handler="selectDay" data-event="click" data-month="2" data-year="2026"><a class="ui-state-default" href="#">12</a></td><td class=" " data-handler="selectDay" data-event="click" data-month="2" data-year="2026"><a class="ui-state-default" href="#">13</a></td><td class=" ui-datepicker-week-end " data-handler="selectDay" data-event="click" data-month="2" data-year="2026"><a class="ui-state-default" href="#">14</a></td></tr><tr><td class=" ui-datepicker-week-end " data-handler="selectDay" data-event="click" data-month="2" data-year="2026"><a class="ui-state-default" href="#">15</a></td><td class=" " data-handler="selectDay" data-event="click" data-month="2" data-year="2026"><a class="ui-state-default" href="#">16</a></td><td class=" " data-handler="selectDay" data-event="click" data-month="2" data-year="2026"><a class="ui-state-default" href="#">17</a></td><td class=" " data-handler="selectDay" data-event="click" data-month="2" data-year="2026"><a class="ui-state-default" href="#">18</a></td><td class=" " data-handler="selectDay" data-event="click" data-month="2" data-year="2026"><a class="ui-state-default" href="#">19</a></td><td class=" " data-handler="selectDay" data-event="click" data-month="2" data-year="2026"><a class="ui-state-default" href="#">20</a></td><td class=" ui-datepicker-week-end " data-handler="selectDay" data-event="click" data-month="2" data-year="2026"><a class="ui-state-default" href="#">21</a></td></tr><tr><td class=" ui-datepicker-week-end " data-handler="selectDay" data-event="click" data-month="2" data-year="2026"><a class="ui-state-default" href="#">22</a></td><td class=" " data-handler="selectDay" data-event="click" data-month="2" data-year="2026"><a class="ui-state-default" href="#">23</a></td><td class=" " data-handler="selectDay" data-event="click" data-month="2" data-year="2026"><a class="ui-state-default" href="#">24</a></td><td class=" " data-handler="selectDay" data-event="click" data-month="2" data-year="2026"><a class="ui-state-default" href="#">25</a></td><td class=" " data-handler="selectDay" data-event="click" data-month="2" data-year="2026"><a class="ui-state-default" href="#">26</a></td><td class=" " data-handler="selectDay" data-event="click" data-month="2" data-year="2026"><a class="ui-state-default" href="#">27</a></td><td class=" ui-datepicker-week-end " data-handler="selectDay" data-event="click" data-month="2" data-year="2026"><a class="ui-state-default" href="#">28</a></td></tr><tr><td class=" ui-datepicker-week-end " data-handler="selectDay" data-event="click" data-month="2" data-year="2026"><a class="ui-state-default" href="#">29</a></td><td class="  ui-datepicker-today" data-handler="selectDay" data-event="click" data-month="2" data-year="2026"><a class="ui-state-default ui-state-highlight" href="#">30</a></td><td class="  ui-datepicker-current-day" data-handler="selectDay" data-event="click" data-month="2" data-year="2026"><a class="ui-state-default ui-state-active" href="#">31</a></td><td class=" ui-datepicker-other-month ui-datepicker-unselectable ui-state-disabled">&nbsp;</td><td class=" ui-datepicker-other-month ui-datepicker-unselectable ui-state-disabled">&nbsp;</td><td class=" ui-datepicker-other-month ui-datepicker-unselectable ui-state-disabled">&nbsp;</td><td class=" ui-datepicker-week-end ui-datepicker-other-month ui-datepicker-unselectable ui-state-disabled">&nbsp;</td></tr></tbody></table></div></body></html>

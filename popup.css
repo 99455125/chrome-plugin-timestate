@@ -1,0 +1,137 @@
+:root {
+  color-scheme: light;
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: #f4f6fb;
+  color: #1e2430;
+}
+
+body {
+  margin: 0;
+  min-width: 340px;
+  background:
+    radial-gradient(circle at top right, rgba(27, 120, 255, 0.12), transparent 40%),
+    linear-gradient(180deg, #f9fbff 0%, #eef3fb 100%);
+}
+
+.popup {
+  padding: 16px;
+}
+
+.card {
+  padding: 16px;
+  border: 1px solid #d6ddea;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 14px 32px rgba(44, 63, 88, 0.08);
+}
+
+.card + .card {
+  margin-top: 12px;
+}
+
+h1,
+h2,
+p,
+dl,
+dd,
+dt {
+  margin: 0;
+}
+
+h1 {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+h2 {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.hint {
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #57627a;
+}
+
+.actions {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+button {
+  border: 0;
+  border-radius: 12px;
+  padding: 11px 14px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
+}
+
+button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.primary {
+  background: linear-gradient(135deg, #0d6efd 0%, #2f87ff 100%);
+  color: #fff;
+  box-shadow: 0 10px 24px rgba(13, 110, 253, 0.28);
+}
+
+.secondary {
+  background: linear-gradient(135deg, #15a46b 0%, #29bf84 100%);
+  color: #fff;
+  box-shadow: 0 10px 24px rgba(21, 164, 107, 0.22);
+}
+
+.status {
+  margin-top: 12px;
+  min-height: 20px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #4a5872;
+}
+
+.status.error {
+  color: #b42318;
+}
+
+.status.loading {
+  color: #0d6efd;
+}
+
+.result {
+  margin-top: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.result .row {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  gap: 10px;
+  align-items: start;
+}
+
+.result dt {
+  font-size: 12px;
+  color: #63708a;
+}
+
+.result dd {
+  font-size: 12px;
+  line-height: 1.5;
+  word-break: break-all;
+}
+
+.result.empty dd {
+  color: #909cb0;
+}
