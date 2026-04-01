@@ -1,4 +1,5 @@
 import { getPresetRange } from "./lib/date-range.mjs";
+import { buildAiSummaryPrompt } from "./lib/daily-report-prompt.mjs";
 import { parseWorkHours } from "./lib/report-parser.mjs";
 
 const DEFAULT_ORIGIN = "http://10.19.3.38";
@@ -45,6 +46,7 @@ async function handleRunStatistics(message, sender) {
 
   const payload = {
     ...result,
+    aiSummaryPrompt: buildAiSummaryPrompt(result),
     preset: preset || "custom"
   };
 

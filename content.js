@@ -411,9 +411,14 @@ function ensureFloatingPanel() {
         </label>
       </div>
       <div class="whs-panel__actions">
-        <button class="whs-panel__btn whs-panel__btn--ghost" data-action="fill-last" type="button">上月</button>
-        <button class="whs-panel__btn whs-panel__btn--ghost" data-action="fill-current" type="button">当月</button>
-        <button class="whs-panel__btn whs-panel__btn--primary" data-action="run" type="button">执行统计</button>
+        <div class="whs-panel__action-row">
+          <button class="whs-panel__btn whs-panel__btn--ghost" data-action="fill-last" type="button">上月</button>
+          <button class="whs-panel__btn whs-panel__btn--ghost" data-action="fill-current" type="button">当月</button>
+        </div>
+        <div class="whs-panel__action-row">
+          <button class="whs-panel__btn whs-panel__btn--primary" data-action="run" type="button">执行统计</button>
+          <button class="whs-panel__btn whs-panel__btn--secondary" data-action="summary" type="button">AI生成日报</button>
+        </div>
       </div>
       <p class="whs-panel__status" data-role="status">等待执行</p>
       <dl class="whs-panel__result whs-panel__result--empty" data-role="result">
@@ -422,6 +427,13 @@ function ensureFloatingPanel() {
         <div class="whs-panel__row"><dt>出勤天数</dt><dd>--</dd></div>
         <div class="whs-panel__row"><dt>记录条数</dt><dd>--</dd></div>
       </dl>
+      <section class="whs-panel__prompt" data-role="prompt" hidden>
+        <div class="whs-panel__prompt-header">
+          <strong class="whs-panel__prompt-title">AI日报提示词</strong>
+          <button class="whs-panel__prompt-copy" data-action="copy-prompt" type="button">复制提示词</button>
+        </div>
+        <textarea class="whs-panel__prompt-textarea" data-role="prompt-text" readonly></textarea>
+      </section>
       <div class="whs-panel__calendarbar">
         <button class="whs-panel__calendar-toggle" data-action="calendar" type="button">工时日历</button>
       </div>
@@ -438,6 +450,8 @@ function ensureFloatingPanel() {
     status: root.querySelector("[data-role='status']"),
     result: root.querySelector("[data-role='result']"),
     calendar: root.querySelector("[data-role='calendar']"),
+    promptSection: root.querySelector("[data-role='prompt']"),
+    promptTextarea: root.querySelector("[data-role='prompt-text']"),
     startInput: root.querySelector("[data-role='start']"),
     endInput: root.querySelector("[data-role='end']"),
     collapseButton: root.querySelector("[data-action='collapse']"),
@@ -446,13 +460,18 @@ function ensureFloatingPanel() {
     fillLastButton: root.querySelector("[data-action='fill-last']"),
     fillCurrentButton: root.querySelector("[data-action='fill-current']"),
     runButton: root.querySelector("[data-action='run']"),
+    summaryButton: root.querySelector("[data-action='summary']"),
+    copyPromptButton: root.querySelector("[data-action='copy-prompt']"),
     collapsed: false,
     userMoved: false,
     calendarExpanded: false,
+    promptVisible: false,
     lastResult: null
   };
 
   setFloatingCalendarExpanded(floatingPanelState, false);
+  setFloatingPromptVisible(floatingPanelState, false);
+  floatingPanelState.copyPromptButton.disabled = true;
   bindFloatingPanelEvents(floatingPanelState);
   return floatingPanelState;
 }
@@ -469,7 +488,7 @@ function ensureFloatingPanelStyles() {
       position: fixed;
       top: 16px;
       left: 16px;
-      width: 340px;
+      width: 372px;
       border: 1px solid rgba(24, 53, 92, 0.18);
       border-radius: 18px;
       background: rgba(255, 255, 255, 0.97);
@@ -585,16 +604,27 @@ function ensureFloatingPanelStyles() {
 
     #${FLOAT_PANEL_ID} .whs-panel__actions {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
       gap: 8px;
       margin-top: 12px;
     }
 
+    #${FLOAT_PANEL_ID} .whs-panel__action-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 8px;
+    }
+
     #${FLOAT_PANEL_ID} .whs-panel__btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
       height: 36px;
+      min-width: 0;
       border-radius: 11px;
       font-size: 12px;
       font-weight: 700;
+      white-space: nowrap;
       transition: transform 0.12s ease, opacity 0.12s ease;
     }
 
@@ -616,6 +646,12 @@ function ensureFloatingPanelStyles() {
     }
 
     #${FLOAT_PANEL_ID} .whs-panel__btn--primary {
+      color: #ffffff;
+      background: linear-gradient(135deg, #1a73ff 0%, #3d8bff 100%);
+      box-shadow: 0 10px 20px rgba(26, 115, 255, 0.25);
+    }
+
+    #${FLOAT_PANEL_ID} .whs-panel__btn--secondary {
       color: #ffffff;
       background: linear-gradient(135deg, #1a73ff 0%, #3d8bff 100%);
       box-shadow: 0 10px 20px rgba(26, 115, 255, 0.25);
@@ -672,6 +708,57 @@ function ensureFloatingPanelStyles() {
 
     #${FLOAT_PANEL_ID} .whs-panel__result--empty dd {
       color: #91a0b4;
+    }
+
+    #${FLOAT_PANEL_ID} .whs-panel__prompt {
+      margin-top: 12px;
+      padding: 10px;
+      border: 1px solid rgba(165, 186, 214, 0.42);
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgba(248, 251, 255, 0.96) 0%, rgba(242, 247, 255, 0.96) 100%);
+    }
+
+    #${FLOAT_PANEL_ID} .whs-panel__prompt[hidden] {
+      display: none !important;
+    }
+
+    #${FLOAT_PANEL_ID} .whs-panel__prompt-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    #${FLOAT_PANEL_ID} .whs-panel__prompt-title {
+      font-size: 12px;
+      line-height: 1.4;
+      color: #29496f;
+    }
+
+    #${FLOAT_PANEL_ID} .whs-panel__prompt-copy {
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #24566f;
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: inset 0 0 0 1px rgba(156, 183, 214, 0.52);
+    }
+
+    #${FLOAT_PANEL_ID} .whs-panel__prompt-textarea {
+      width: 100%;
+      min-height: 156px;
+      padding: 10px 11px;
+      border: 1px solid #cfdbef;
+      border-radius: 12px;
+      resize: vertical;
+      background: rgba(255, 255, 255, 0.94);
+      color: #1a3556;
+      font: inherit;
+      font-size: 12px;
+      line-height: 1.6;
+      box-sizing: border-box;
     }
 
     #${FLOAT_PANEL_ID} .whs-panel__calendarbar {
@@ -794,6 +881,8 @@ function bindFloatingPanelEvents(panel) {
   panel.fillLastButton.addEventListener("click", () => applyFloatingPreset("lastMonth"));
   panel.fillCurrentButton.addEventListener("click", () => applyFloatingPreset("currentMonth"));
   panel.runButton.addEventListener("click", () => runFloatingPanelStatistics());
+  panel.summaryButton.addEventListener("click", () => generateFloatingPanelSummaryPrompt());
+  panel.copyPromptButton.addEventListener("click", () => copyFloatingPanelPrompt());
   panel.closeButton.addEventListener("click", () => hideFloatingPanel({ manual: true }));
   panel.collapseButton.addEventListener("click", () => toggleFloatingCollapse(panel));
   panel.calendarButton.addEventListener("click", () => toggleFloatingCalendar(panel));
@@ -954,55 +1043,72 @@ function applyFloatingPreset(type) {
 
 async function runFloatingPanelStatistics() {
   const panel = ensureFloatingPanel();
-  const startDate = normalizeDateInputValue(panel.startInput.value);
-  const endDate = normalizeDateInputValue(panel.endInput.value);
+  const range = getFloatingPanelDateRange(panel);
 
-  if (!startDate || !endDate) {
-    setFloatingPanelStatus("请输入开始和结束日期。", "error");
+  if (!range) {
     return;
-  }
-
-  if (startDate > endDate) {
-    setFloatingPanelStatus("开始日期不能晚于结束日期。", "error");
-    return;
-  }
-
-  if (panel.calendarExpanded) {
-    setFloatingCalendarExpanded(panel, false);
-    persistCurrentFloatingPanelState();
   }
 
   setFloatingPanelLoading(true);
   setFloatingPanelStatus("正在刷新页面并统计全部工时…", "loading");
 
   try {
-    const response = await chrome.runtime.sendMessage({
-      type: "RUN_STATISTICS",
-      startDate,
-      endDate,
-      activeTabUrl: window.location.href
-    });
-
-    if (!response?.ok) {
-      throw new Error(response?.error || "统计失败。");
+    if (panel.calendarExpanded) {
+      setFloatingCalendarExpanded(panel, false);
+      persistCurrentFloatingPanelState();
     }
 
-    renderFloatingPanelResult(response.result);
-    setFloatingPanelStatus(response.result.warning || "统计完成。", response.result.warning ? "warning" : "");
-
-    if (!panel.userMoved) {
-      const reportContext = findReportContext();
-      if (reportContext?.state === "report") {
-        positionFloatingPanel(panel, reportContext);
-      }
-    }
-
-    persistCurrentFloatingPanelState();
+    const result = await requestFloatingPanelStatistics(range);
+    setFloatingPanelStatus(result.warning || "统计完成。", result.warning ? "warning" : "");
   } catch (error) {
     setFloatingPanelStatus(error.message || "统计失败。", "error");
   } finally {
     setFloatingPanelLoading(false);
   }
+}
+
+async function generateFloatingPanelSummaryPrompt() {
+  const panel = ensureFloatingPanel();
+  const range = getFloatingPanelDateRange(panel);
+
+  if (!range) {
+    return;
+  }
+
+  setFloatingPanelLoading(true);
+  setFloatingPanelStatus("正在汇总日报并生成 AI 提示词…", "loading");
+
+  try {
+    const result = canReuseFloatingPanelResult(panel.lastResult, range)
+      ? panel.lastResult
+      : await requestFloatingPanelStatistics(range);
+
+    if (!result?.aiSummaryPrompt) {
+      throw new Error("当前统计结果缺少 AI 提示词。");
+    }
+
+    renderFloatingPrompt(result.aiSummaryPrompt);
+    const copied = await copyTextToClipboard(result.aiSummaryPrompt);
+    setFloatingPanelStatus(copied ? "AI 提示词已生成并复制。" : "AI 提示词已生成。");
+    persistCurrentFloatingPanelState();
+  } catch (error) {
+    setFloatingPanelStatus(error.message || "生成 AI 提示词失败。", "error");
+  } finally {
+    setFloatingPanelLoading(false);
+  }
+}
+
+async function copyFloatingPanelPrompt() {
+  const panel = ensureFloatingPanel();
+  const promptText = panel.promptTextarea.value.trim();
+
+  if (!promptText) {
+    setFloatingPanelStatus("暂无可复制的 AI 提示词。", "error");
+    return;
+  }
+
+  const copied = await copyTextToClipboard(promptText);
+  setFloatingPanelStatus(copied ? "AI 提示词已复制。" : "复制失败，请手动选中文本复制。", copied ? "" : "warning");
 }
 
 function renderFloatingPanelResult(result) {
@@ -1026,6 +1132,10 @@ function renderFloatingPanelResult(result) {
   if (panel.calendarExpanded) {
     renderFloatingCalendar(panel, result);
   }
+
+  if (panel.promptVisible && result.aiSummaryPrompt) {
+    renderFloatingPrompt(result.aiSummaryPrompt);
+  }
 }
 
 function renderFloatingPanelRow(label, value) {
@@ -1047,8 +1157,10 @@ function setFloatingPanelLoading(loading) {
   panel.fillLastButton.disabled = loading;
   panel.fillCurrentButton.disabled = loading;
   panel.runButton.disabled = loading;
+  panel.summaryButton.disabled = loading;
   panel.collapseButton.disabled = loading;
   panel.calendarButton.disabled = loading;
+  panel.copyPromptButton.disabled = loading || !panel.promptTextarea.value.trim();
 }
 
 function toggleFloatingCalendar(panel) {
@@ -1076,8 +1188,9 @@ function renderFloatingCalendar(panel, result) {
 
   const months = buildCalendarMonths(result.startDate, result.endDate);
   const dailyHoursMap = result.dailyHoursMap || {};
+  const visibleEndDate = getCalendarVisibleEndDate(result.endDate);
 
-  panel.calendar.innerHTML = months.map((month) => renderCalendarMonth(month, dailyHoursMap)).join("");
+  panel.calendar.innerHTML = months.map((month) => renderCalendarMonth(month, dailyHoursMap, result.startDate, visibleEndDate)).join("");
 }
 
 function buildCalendarMonths(startDate, endDate) {
@@ -1097,7 +1210,7 @@ function buildCalendarMonths(startDate, endDate) {
   return months;
 }
 
-function renderCalendarMonth(monthInfo, dailyHoursMap) {
+function renderCalendarMonth(monthInfo, dailyHoursMap, startDate, endDate) {
   const firstDay = new Date(monthInfo.year, monthInfo.month, 1);
   const lastDay = new Date(monthInfo.year, monthInfo.month + 1, 0);
   const leadingEmptyCount = firstDay.getDay();
@@ -1112,7 +1225,8 @@ function renderCalendarMonth(monthInfo, dailyHoursMap) {
     const dateKey = formatDate(date);
     const weekend = date.getDay() === 0 || date.getDay() === 6;
     const hasHours = Object.prototype.hasOwnProperty.call(dailyHoursMap, dateKey);
-    const hoursValue = hasHours ? dailyHoursMap[dateKey] : (!weekend ? 0 : undefined);
+    const inVisibleRange = dateKey >= startDate && dateKey <= endDate;
+    const hoursValue = hasHours ? dailyHoursMap[dateKey] : (inVisibleRange && !weekend ? 0 : undefined);
     const badgeHtml = renderCalendarBadge(hoursValue, weekend);
     const weekendClass = weekend ? " whs-panel__calendar-day--weekend" : "";
 
@@ -1154,6 +1268,105 @@ function renderCalendarBadge(hoursValue, isWeekend) {
 
   const badgeClass = !isWeekend && hours === 8 ? "good" : "bad";
   return `<span class="whs-panel__calendar-badge whs-panel__calendar-badge--${badgeClass}">${formatHours(hours)}</span>`;
+}
+
+function getFloatingPanelDateRange(panel) {
+  const startDate = normalizeDateInputValue(panel.startInput.value);
+  const endDate = normalizeDateInputValue(panel.endInput.value);
+
+  if (!startDate || !endDate) {
+    setFloatingPanelStatus("请输入开始和结束日期。", "error");
+    return null;
+  }
+
+  if (startDate > endDate) {
+    setFloatingPanelStatus("开始日期不能晚于结束日期。", "error");
+    return null;
+  }
+
+  return { startDate, endDate };
+}
+
+async function requestFloatingPanelStatistics({ startDate, endDate }) {
+  const response = await chrome.runtime.sendMessage({
+    type: "RUN_STATISTICS",
+    startDate,
+    endDate,
+    activeTabUrl: window.location.href
+  });
+
+  if (!response?.ok) {
+    throw new Error(response?.error || "统计失败。");
+  }
+
+  renderFloatingPanelResult(response.result);
+
+  const panel = ensureFloatingPanel();
+  if (!panel.userMoved) {
+    const reportContext = findReportContext();
+    if (reportContext?.state === "report") {
+      positionFloatingPanel(panel, reportContext);
+    }
+  }
+
+  persistCurrentFloatingPanelState();
+  return response.result;
+}
+
+function canReuseFloatingPanelResult(lastResult, range) {
+  return Boolean(
+    lastResult &&
+    lastResult.startDate === range.startDate &&
+    lastResult.endDate === range.endDate &&
+    typeof lastResult.aiSummaryPrompt === "string" &&
+    lastResult.aiSummaryPrompt.trim() !== ""
+  );
+}
+
+function renderFloatingPrompt(promptText) {
+  const panel = ensureFloatingPanel();
+  panel.promptTextarea.value = promptText;
+  setFloatingPromptVisible(panel, true);
+  panel.copyPromptButton.disabled = false;
+}
+
+function setFloatingPromptVisible(panel, visible) {
+  panel.promptVisible = Boolean(visible);
+  panel.promptSection.hidden = !panel.promptVisible;
+}
+
+async function copyTextToClipboard(text) {
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch (_error) {
+  }
+
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.setAttribute("readonly", "readonly");
+  textarea.style.position = "fixed";
+  textarea.style.left = "-9999px";
+  document.body.append(textarea);
+  textarea.select();
+
+  let copied = false;
+
+  try {
+    copied = document.execCommand("copy");
+  } catch (_error) {
+    copied = false;
+  }
+
+  textarea.remove();
+  return copied;
+}
+
+function getCalendarVisibleEndDate(endDate) {
+  const today = formatDate(new Date());
+  return endDate < today ? endDate : today;
 }
 
 function getPresetRange(type) {
@@ -1233,6 +1446,7 @@ async function restoreFloatingPanelOnLoad() {
     panel.root.classList.toggle("is-collapsed", panel.collapsed);
     panel.collapseButton.textContent = panel.collapsed ? "展开" : "收起";
     setFloatingCalendarExpanded(panel, Boolean(storedState.calendarExpanded));
+    setFloatingPromptVisible(panel, false);
     panel.lastResult = storedState.lastResult || null;
 
     if (storedState.position && Number.isFinite(storedState.position.left) && Number.isFinite(storedState.position.top)) {
@@ -1250,6 +1464,7 @@ async function restoreFloatingPanelOnLoad() {
     } else if (panel.calendarExpanded) {
       renderFloatingCalendar(panel, null);
     }
+    panel.copyPromptButton.disabled = true;
   } catch (_error) {
   }
 }
