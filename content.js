@@ -411,14 +411,10 @@ function ensureFloatingPanel() {
         </label>
       </div>
       <div class="whs-panel__actions">
-        <div class="whs-panel__action-row">
-          <button class="whs-panel__btn whs-panel__btn--ghost" data-action="fill-last" type="button">上月</button>
-          <button class="whs-panel__btn whs-panel__btn--ghost" data-action="fill-current" type="button">当月</button>
-        </div>
-        <div class="whs-panel__action-row">
-          <button class="whs-panel__btn whs-panel__btn--primary" data-action="run" type="button">执行统计</button>
-          <button class="whs-panel__btn whs-panel__btn--secondary" data-action="summary" type="button">AI生成日报</button>
-        </div>
+        <button class="whs-panel__btn whs-panel__btn--ghost" data-action="fill-last" type="button">上月</button>
+        <button class="whs-panel__btn whs-panel__btn--ghost" data-action="fill-current" type="button">当月</button>
+        <button class="whs-panel__btn whs-panel__btn--primary" data-action="run" type="button">执行统计</button>
+        <button class="whs-panel__btn whs-panel__btn--secondary" data-action="summary" type="button">AI生成日报</button>
       </div>
       <p class="whs-panel__status" data-role="status">等待执行</p>
       <dl class="whs-panel__result whs-panel__result--empty" data-role="result">
@@ -486,9 +482,12 @@ function ensureFloatingPanelStyles() {
   style.textContent = `
     #${FLOAT_PANEL_ID} {
       position: fixed;
+      display: flex;
+      flex-direction: column;
       top: 16px;
       left: 16px;
       width: 372px;
+      max-height: calc(100vh - 24px);
       border: 1px solid rgba(24, 53, 92, 0.18);
       border-radius: 18px;
       background: rgba(255, 255, 255, 0.97);
@@ -497,6 +496,7 @@ function ensureFloatingPanelStyles() {
       z-index: 2147483646;
       color: #18355c;
       font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+      overflow: hidden;
     }
 
     #${FLOAT_PANEL_ID}[hidden] {
@@ -514,6 +514,7 @@ function ensureFloatingPanelStyles() {
 
     #${FLOAT_PANEL_ID} .whs-panel__header {
       display: flex;
+      flex: 0 0 auto;
       align-items: center;
       justify-content: space-between;
       gap: 12px;
@@ -568,7 +569,11 @@ function ensureFloatingPanelStyles() {
     }
 
     #${FLOAT_PANEL_ID} .whs-panel__body {
+      flex: 1 1 auto;
+      min-height: 0;
       padding: 14px 16px 16px;
+      overflow-y: auto;
+      overscroll-behavior: contain;
     }
 
     #${FLOAT_PANEL_ID} .whs-panel__dates {
@@ -603,29 +608,56 @@ function ensureFloatingPanelStyles() {
     }
 
     #${FLOAT_PANEL_ID} .whs-panel__actions {
-      display: grid;
+      display: grid !important;
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      grid-template-areas:
+        "last current"
+        "run summary" !important;
       gap: 8px;
       margin-top: 12px;
-    }
-
-    #${FLOAT_PANEL_ID} .whs-panel__action-row {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-      gap: 8px;
+      width: 100%;
     }
 
     #${FLOAT_PANEL_ID} .whs-panel__btn {
-      display: flex;
+      appearance: none;
+      -webkit-appearance: none;
+      display: flex !important;
       align-items: center;
       justify-content: center;
       width: 100%;
-      height: 36px;
+      min-height: 40px;
       min-width: 0;
+      margin: 0;
+      padding: 0 12px;
+      border: 0;
       border-radius: 11px;
+      box-sizing: border-box;
+      float: none !important;
+      clear: none !important;
+      position: static !important;
       font-size: 12px;
       font-weight: 700;
+      line-height: 1;
+      text-align: center;
       white-space: nowrap;
+      vertical-align: top;
       transition: transform 0.12s ease, opacity 0.12s ease;
+    }
+
+    #${FLOAT_PANEL_ID} .whs-panel__btn[data-action='fill-last'] {
+      grid-area: last;
+    }
+
+    #${FLOAT_PANEL_ID} .whs-panel__btn[data-action='fill-current'] {
+      grid-area: current;
+    }
+
+    #${FLOAT_PANEL_ID} .whs-panel__btn[data-action='run'] {
+      grid-area: run;
+    }
+
+    #${FLOAT_PANEL_ID} .whs-panel__btn[data-action='summary'] {
+      grid-area: summary;
     }
 
     #${FLOAT_PANEL_ID} .whs-panel__btn:hover:not(:disabled),
@@ -647,14 +679,14 @@ function ensureFloatingPanelStyles() {
 
     #${FLOAT_PANEL_ID} .whs-panel__btn--primary {
       color: #ffffff;
-      background: linear-gradient(135deg, #1a73ff 0%, #3d8bff 100%);
-      box-shadow: 0 10px 20px rgba(26, 115, 255, 0.25);
+      background: linear-gradient(135deg, #1a73ff 0%, #3d8bff 100%) !important;
+      box-shadow: 0 10px 20px rgba(26, 115, 255, 0.25) !important;
     }
 
     #${FLOAT_PANEL_ID} .whs-panel__btn--secondary {
       color: #ffffff;
-      background: linear-gradient(135deg, #1a73ff 0%, #3d8bff 100%);
-      box-shadow: 0 10px 20px rgba(26, 115, 255, 0.25);
+      background: linear-gradient(135deg, #1a73ff 0%, #3d8bff 100%) !important;
+      box-shadow: 0 10px 20px rgba(26, 115, 255, 0.25) !important;
     }
 
     #${FLOAT_PANEL_ID} .whs-panel__status {
@@ -748,7 +780,8 @@ function ensureFloatingPanelStyles() {
 
     #${FLOAT_PANEL_ID} .whs-panel__prompt-textarea {
       width: 100%;
-      min-height: 156px;
+      height: 120px;
+      min-height: 120px;
       padding: 10px 11px;
       border: 1px solid #cfdbef;
       border-radius: 12px;
@@ -888,8 +921,12 @@ function bindFloatingPanelEvents(panel) {
   panel.calendarButton.addEventListener("click", () => toggleFloatingCalendar(panel));
   panel.startInput.addEventListener("change", () => persistCurrentFloatingPanelState());
   panel.endInput.addEventListener("change", () => persistCurrentFloatingPanelState());
+  enableFloatingPanelScroll(panel);
   enableFloatingPanelDragging(panel);
-  window.addEventListener("resize", () => keepFloatingPanelInViewport(panel));
+  window.addEventListener("resize", () => {
+    keepFloatingPanelInViewport(panel);
+    updateFloatingPanelScrollableArea(panel);
+  });
 }
 
 function toggleFloatingCollapse(panel) {
@@ -923,6 +960,7 @@ function enableFloatingPanelDragging(panel) {
     panel.root.style.left = `${nextLeft}px`;
     panel.root.style.top = `${nextTop}px`;
     panel.userMoved = true;
+    updateFloatingPanelScrollableArea(panel);
   };
 
   const handleMouseUp = () => {
@@ -961,6 +999,7 @@ function showFloatingPanel(panel, reportContext) {
     keepFloatingPanelInViewport(panel);
   }
 
+  updateFloatingPanelScrollableArea(panel);
   panel.root.style.visibility = "";
 }
 
@@ -1030,6 +1069,46 @@ function keepFloatingPanelInViewport(panel) {
 
   panel.root.style.left = `${left}px`;
   panel.root.style.top = `${top}px`;
+  updateFloatingPanelScrollableArea(panel);
+}
+
+function enableFloatingPanelScroll(panel) {
+  panel.body.addEventListener("wheel", (event) => {
+    if (panel.root.hidden || panel.collapsed) {
+      return;
+    }
+
+    const container = panel.body;
+    const maxScrollTop = Math.max(0, container.scrollHeight - container.clientHeight);
+
+    if (maxScrollTop <= 0) {
+      event.stopPropagation();
+      return;
+    }
+
+    const nextScrollTop = clamp(container.scrollTop + event.deltaY, 0, maxScrollTop);
+
+    if (nextScrollTop !== container.scrollTop) {
+      container.scrollTop = nextScrollTop;
+      event.preventDefault();
+    }
+
+    event.stopPropagation();
+  }, { passive: false });
+}
+
+function updateFloatingPanelScrollableArea(panel) {
+  if (!panel?.root || panel.root.hidden || panel.collapsed) {
+    return;
+  }
+
+  const rect = panel.root.getBoundingClientRect();
+  const availableHeight = Math.max(220, window.innerHeight - rect.top - 12);
+  const headerHeight = panel.header.offsetHeight || 56;
+  const bodyMaxHeight = Math.max(140, availableHeight - headerHeight);
+
+  panel.root.style.maxHeight = `${availableHeight}px`;
+  panel.body.style.maxHeight = `${bodyMaxHeight}px`;
 }
 
 function applyFloatingPreset(type) {
@@ -1055,8 +1134,10 @@ async function runFloatingPanelStatistics() {
   try {
     if (panel.calendarExpanded) {
       setFloatingCalendarExpanded(panel, false);
-      persistCurrentFloatingPanelState();
     }
+
+    clearFloatingPrompt(panel);
+    persistCurrentFloatingPanelState();
 
     const result = await requestFloatingPanelStatistics(range);
     setFloatingPanelStatus(result.warning || "统计完成。", result.warning ? "warning" : "");
@@ -1079,6 +1160,11 @@ async function generateFloatingPanelSummaryPrompt() {
   setFloatingPanelStatus("正在汇总日报并生成 AI 提示词…", "loading");
 
   try {
+    if (panel.calendarExpanded) {
+      setFloatingCalendarExpanded(panel, false);
+      persistCurrentFloatingPanelState();
+    }
+
     const result = canReuseFloatingPanelResult(panel.lastResult, range)
       ? panel.lastResult
       : await requestFloatingPanelStatistics(range);
@@ -1333,6 +1419,12 @@ function renderFloatingPrompt(promptText) {
 function setFloatingPromptVisible(panel, visible) {
   panel.promptVisible = Boolean(visible);
   panel.promptSection.hidden = !panel.promptVisible;
+}
+
+function clearFloatingPrompt(panel) {
+  setFloatingPromptVisible(panel, false);
+  panel.promptTextarea.value = "";
+  panel.copyPromptButton.disabled = true;
 }
 
 async function copyTextToClipboard(text) {
